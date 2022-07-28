@@ -50,7 +50,7 @@ typedef enum{
 	DIO_PIN_B15 = 16 + 15,
 	/*	~~~~~~~~~~~~	*/
 
-	/*	PORTB pins	*/
+	/*	PORTC pins	*/
 	DIO_PIN_C0 	= 16*2 + 0,
 	DIO_PIN_C1 	= 16*2 + 1,
 	DIO_PIN_C2 	= 16*2 + 2,
