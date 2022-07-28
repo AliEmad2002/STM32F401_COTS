@@ -14,7 +14,7 @@
 void tempDelay(u32 ms)
 {
 	register u32 ticks = (16000000/7000)*ms;
-	// 10000 is an experimental number, do better !
+	// 7000 is an experimental number, do better !
 	while(ticks--)
 		__asm__ volatile("NOP"); // assembly instruction that does nothing.
 }
