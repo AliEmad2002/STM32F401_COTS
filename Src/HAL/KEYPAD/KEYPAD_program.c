@@ -4,7 +4,7 @@
  *  Created on:	Aug 3, 2022
  *  Author:		Ali Emad Ali
  *	
- *	Resources:
+ *	References:
  *		* https://arduinogetstarted.com/tutorials/arduino-keypad
  *
  */
