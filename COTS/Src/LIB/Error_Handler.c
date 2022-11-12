@@ -9,6 +9,7 @@
 /*	LIB	*/
 #include "Std_Types.h"
 #include "Bit_Math.h"
+#include "Debug_active.h"
 
 /*	SELF	*/
 #include "Error_Handler_config.h"
@@ -20,11 +21,11 @@
  */
 void ErrorHandler(u32 errCode)
 {
-	/*	avoiding warning	*/
-	errCode++;
 	while(1)
 	{
-		// do no thing.
+		#if DEBUG_ON == 1
+		trace_printf("Entered Error handler with code %d\n", errCode);
+		#endif
 	}
 }
 

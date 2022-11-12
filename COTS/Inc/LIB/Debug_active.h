@@ -8,6 +8,8 @@
 #ifndef INCLUDE_LIB_DEBUG_ACTIVE_H_
 #define INCLUDE_LIB_DEBUG_ACTIVE_H_
 
+#include "diag/trace.h"
+
 /*
  * turns on/off the messages printing on the debug terminal.
  */

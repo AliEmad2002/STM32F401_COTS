@@ -12,34 +12,62 @@
 
 /*	MCAL	*/
 #include "GPIO_interface.h"
+#include "TIM_interface.h"
 
 /*	SELF	*/
 #include "RGB_LED_interface.h"
 
+
+/*	inits RGB_LED object	*/
 void RGB_LED_voidInit(
-	RGB_LED_t* ledPtr, GPIO_Pin_t redPin,
-	GPIO_Pin_t greenPin, GPIO_Pin_t bluePin
+	RGB_LED_t* ledPtr,
+	u8 redTimUnitNum, u8 greenTimUnitNum, u8 blueTimUnitNum,
+	TIM_Channel_t redTimCh, TIM_Channel_t greenTimCh, TIM_Channel_t blueTimCh,
+	u8 redAFIOTimMap, u8 greenAFIOTimMap, u8 blueAFIOTimMap,
+	u16 freqHz
 	)
 {
-	/*	calculate, store and init pins	*/
-	ledPtr->pinArr[0] = redPin % 16;
-	ledPtr->pinArr[1] = greenPin % 16;
-	ledPtr->pinArr[2] = bluePin % 16;
+	ledPtr->timUnitNumArr[0] = redTimUnitNum;
+	ledPtr->timUnitNumArr[1] = greenTimUnitNum;
+	ledPtr->timUnitNumArr[2] = blueTimUnitNum;
 
-	ledPtr->portArr[0] = redPin / 16;
-	ledPtr->portArr[1] = greenPin / 16;
-	ledPtr->portArr[2] = bluePin / 16;
+	ledPtr->timChArr[0] = redTimCh;
+	ledPtr->timChArr[1] = greenTimCh;
+	ledPtr->timChArr[2] = blueTimCh;
+
+	u8 tempTimMapArr[3] = {
+		redAFIOTimMap, greenAFIOTimMap, blueAFIOTimMap
+	};
 
 	for (u8 i = 0; i < 3; i++)
 	{
-		GPIO_voidSetPinMode(ledPtr->portArr[i], ledPtr->pinArr[i], GPIO_Mode_GPO_PushPull);
-		GPIO_voidSetPinOutputSpeed(ledPtr->portArr[i], ledPtr->pinArr[i], GPIO_OutputSpeed_50MHz);
-		GPIO_voidSetPinOutputLevel(ledPtr->portArr[i], ledPtr->pinArr[i], GPIO_OutputLevel_Low);
+		TIM_voidDisableCounter(ledPtr->timUnitNumArr[i]);
+
+		(void)TIM_u64InitPWM(
+			ledPtr->timUnitNumArr[i], ledPtr->timChArr[i], freqHz);
+
+		TIM_voidInitOutputPin(
+			ledPtr->timUnitNumArr[i], ledPtr->timChArr[i], tempTimMapArr[i]);
+
+		TIM_voidEnableCounter(ledPtr->timUnitNumArr[i]);
 	}
+
+
+	RGB_LED_voidSetColor(ledPtr, (RGB_LED_Color_t){0, 0, 0});
 }
 
+/*	sets color	*/
+void RGB_LED_voidSetColor(RGB_LED_t* ledPtr, RGB_LED_Color_t color)
+{
+	TIM_voidSetDutyCycle(
+		ledPtr->timUnitNumArr[0], ledPtr->timChArr[0], color.red);
 
+	TIM_voidSetDutyCycle(
+		ledPtr->timUnitNumArr[1], ledPtr->timChArr[1], color.green);
 
+	TIM_voidSetDutyCycle(
+		ledPtr->timUnitNumArr[2], ledPtr->timChArr[2], color.blue);
+}
 
 
 
