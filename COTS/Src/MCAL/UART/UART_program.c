@@ -336,7 +336,8 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 	/*	init timing variables	*/
 	volatile u64 startTime = STK_u64GetElapsedTicks();
 	volatile u64 lastTimeStamp = startTime;
-	volatile u64 tickInterval = ((u64)STK_u32GetTicksPerSecond() * (u64)msTimeout) / 1000;
+	volatile u64 tickInterval =
+		((u64)STK_u32GetTicksPerSecond() * (u64)msTimeout) / 1000;
 
 	u16 i = 0;
 	u16 j = 0;
@@ -355,6 +356,13 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 				if (terminatorStr[j+1] == '\0')
 				{
 					str[++i] = '\0';
+					/*
+					#if DEBUG_ON
+					trace_printf("received: \"");
+					trace_printf(str);
+					trace_printf("\"\n");
+					#endif
+					*/
 					return true;
 				}
 				/*	else if not yet	*/
@@ -371,6 +379,14 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 		}
 		lastTimeStamp = STK_u64GetElapsedTicks();
 	}
+
+
+	#if DEBUG_ON
+	trace_printf("received: \"");
+	trace_printf(str);
+	trace_printf("\"\n");
+	#endif
+
 
 	return false;
 }

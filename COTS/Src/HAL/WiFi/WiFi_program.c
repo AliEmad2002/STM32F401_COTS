@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Error_Handler_interface.h"
+#include "Debug_active.h"
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -29,14 +30,19 @@
 
 
 
-void WiFi_voidInit(WiFi_t* module, GPIO_Pin_t rstPin, UART_UnitNumber_t uartUnitNumber)
+void WiFi_voidInit(
+	WiFi_t* module, GPIO_Pin_t rstPin,
+	UART_UnitNumber_t uartUnitNumber, u32 baudrate, u8 uartAfioMap)
 {
 	module->rstPort = rstPin / 16;
 	module->rstPin = rstPin % 16;
 	GPIO_voidSetPinGpoPushPull(module->rstPort, module->rstPin);
-	GPIO_voidSetPinOutputLevel(module->rstPort, module->rstPin, GPIO_OutputLevel_High);
+	GPIO_voidSetPinOutputLevel(
+		module->rstPort, module->rstPin, GPIO_OutputLevel_High);
 
 	module->uartUnitNumber = uartUnitNumber;
+
+	UART_voidFastInit(uartUnitNumber, baudrate, uartAfioMap);
 }
 
 b8 WiFi_b8HardReset(WiFi_t* module)
@@ -47,6 +53,12 @@ b8 WiFi_b8HardReset(WiFi_t* module)
 
 	char str[WIFI_MAX_RESPONSE_LEN];
 	b8 ok = UART_b8ReceiveStringTimeout(module->uartUnitNumber, str, 5000, "ready");
+
+	#if DEBUG_ON
+	if (ok)
+		trace_printf("Hard reset success\n");
+	#endif
+
 	return ok;
 }
 
@@ -56,7 +68,7 @@ void WiFi_voidEnter(WiFi_t* module)
 	UART_enumSendByte(module->uartUnitNumber, '\n');
 }
 
-b8 WiFi_b8ValidateJustExecuted(WiFi_t* module, u16 timeout)
+b8 WiFi_b8ValidateJustExecuted(WiFi_t* module, u32 timeout)
 {
 	char str[WIFI_MAX_RESPONSE_LEN];
 
@@ -91,6 +103,12 @@ b8 WiFi_b8SelectMode(WiFi_t* module, WiFi_Mode_t mode, b8 storeInFlash)
 
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 2000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("select mode success\n");
+	#endif
+
 	return valid;
 }
 
@@ -122,7 +140,13 @@ b8 WiFi_b8ConnectToAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
 	WiFi_voidEnter(module);
 
 	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
+	b8 valid = WiFi_b8ValidateJustExecuted(module, 5000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("connect to AP success\n");
+	#endif
+
 	return valid;
 }
 
@@ -155,45 +179,23 @@ b8 WiFi_b8CreateAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
 
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("created AP success\n");
+	#endif
+
 	return valid;
 }
 
-/*
- * (notice that ESP8266 can't connect to TCP server when
- * multiple connections mode is enabled)
- */
-b8 WiFi_b8ConnectToTCP(WiFi_t* module, char* address, char* port)
+b8 WiFi_b8SelectMultipleConnections(
+	WiFi_t* module, WiFi_MultiplieConnection_t mode)
 {
 	/*	flush parasitic remaining data byte	*/
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
 
 	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_TCP_IP_CMD_HEADER);
-
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CONNECT_TCP_IP);
-
-	/*	send command params	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, "=\"TCP\",\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, address);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",");
-	UART_voidSendStringEcho(module->uartUnitNumber, port);
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 5000);
-	return valid;
-}
-
-b8 WiFi_b8SelectMultipleConnections(WiFi_t* module, WiFi_MultiplieConnection_t mode)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_TCP_IP_CMD_HEADER);
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
 
 	/*	send command	*/
 	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_MULTIPLE_CONNECTIONS);
@@ -207,6 +209,78 @@ b8 WiFi_b8SelectMultipleConnections(WiFi_t* module, WiFi_MultiplieConnection_t m
 
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 2000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("selected multiple connections success\n");
+	#endif
+
+	return valid;
+}
+
+b8 WiFi_b8ConnectToTCP(WiFi_t* module, char* address, char* port, u8 linkId)
+{
+	/*	flush parasitic remaining data byte	*/
+	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
+
+	/*	send command class header	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
+
+	/*	send command	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CONNECT_TCP_IP);
+
+	/*	send command params	*/
+	UART_voidSendByteEcho(module->uartUnitNumber, '=');
+	UART_voidSendByteEcho(module->uartUnitNumber, linkId + '0');
+	UART_voidSendStringEcho(module->uartUnitNumber, ",\"TCP\",\"");
+	UART_voidSendStringEcho(module->uartUnitNumber, address);
+	UART_voidSendStringEcho(module->uartUnitNumber, "\",");
+	UART_voidSendStringEcho(module->uartUnitNumber, port);
+
+	/*	enter command	*/
+	WiFi_voidEnter(module);
+
+	/*	validate execution	*/
+	b8 valid = WiFi_b8ValidateJustExecuted(module, 5000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("connected to TCP success\n");
+	#endif
+
+	return valid;
+}
+
+b8 WiFi_b8ConnectToUDP(WiFi_t* module, char* address, char* port, u8 linkId)
+{
+	/*	flush parasitic remaining data byte	*/
+	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
+
+	/*	send command class header	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
+
+	/*	send command	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CONNECT_TCP_IP);
+
+	/*	send command params	*/
+	UART_voidSendByteEcho(module->uartUnitNumber, '=');
+	UART_voidSendByteEcho(module->uartUnitNumber, linkId + '0');
+	UART_voidSendStringEcho(module->uartUnitNumber, ",\"UDP\",\"");
+	UART_voidSendStringEcho(module->uartUnitNumber, address);
+	UART_voidSendStringEcho(module->uartUnitNumber, "\",");
+	UART_voidSendStringEcho(module->uartUnitNumber, port);
+
+	/*	enter command	*/
+	WiFi_voidEnter(module);
+
+	/*	validate execution	*/
+	b8 valid = WiFi_b8ValidateJustExecuted(module, 5000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("connected to UDP success\n");
+	#endif
+
 	return valid;
 }
 
@@ -219,7 +293,7 @@ b8 WiFi_b8CreateTCP(WiFi_t* module, char* port)
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
 
 	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_TCP_IP_CMD_HEADER);
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
 
 	/*	send command	*/
 	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CREATE_TCP_SERVER);
@@ -233,6 +307,12 @@ b8 WiFi_b8CreateTCP(WiFi_t* module, char* port)
 
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
+
+	#if DEBUG_ON
+	if (valid)
+		trace_printf("created TCP success\n");
+	#endif
+
 	return valid;
 }
 
@@ -242,7 +322,7 @@ b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
 
 	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_TCP_IP_CMD_HEADER);
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
 
 	/*	send command	*/
 	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_SEND_TCP);
@@ -257,7 +337,8 @@ b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
 	WiFi_voidEnter(module);
 
 	/*	wait for wrap return	*/
-	b8 wrapReturn = UART_b8ReceiveStringTimeout(module->uartUnitNumber, tempStr, 1000, ">");
+	b8 wrapReturn =
+		UART_b8ReceiveStringTimeout(module->uartUnitNumber, tempStr, 1000, ">");
 	if (!wrapReturn)
 	{
 		WIFI_ERROR_HANDLER;
@@ -272,6 +353,55 @@ b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
 	return valid;
+}
+
+u64 WiFi_u64SendByteTCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
+{
+	/*	flush parasitic remaining data byte	*/
+	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
+
+	/*	send command class header	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
+
+	/*	send command	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_SEND_TCP);
+
+	/*	send command params	*/
+	UART_voidSendByteEcho(module->uartUnitNumber, '=');
+	UART_voidSendByteEcho(module->uartUnitNumber, linkId + '0');
+	UART_voidSendStringEcho(module->uartUnitNumber, ",1");
+
+	/*	enter command	*/
+	WiFi_voidEnter(module);
+
+	/*	wait for wrap return	*/
+	char tempStr[WIFI_MAX_RESPONSE_LEN];
+	b8 wrapReturn =
+		UART_b8ReceiveStringTimeout(module->uartUnitNumber, tempStr, 1000, ">");
+	if (!wrapReturn)
+	{
+		WIFI_ERROR_HANDLER;
+	}
+
+	/*	flush after wrap return	*/
+	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
+
+	/*	send byte	*/
+	UART_enumSendByte(module->uartUnitNumber, byte);
+
+	/*	take timestamp	*/
+	u64 tSent = STK_u64GetElapsedTicks();
+
+	/*	validate execution	*/
+	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
+
+	/*	calculate elapsed time	*/
+	u64 tElapsed = STK_u64GetElapsedTicks() - tSent;
+
+	if (valid)
+		return tElapsed;
+	else
+		return 0;
 }
 
 /*	TCP server must be initially created	*/
@@ -307,7 +437,7 @@ b8 WiFi_b8SetIP(WiFi_t* module, char* ip, char* gateway, char* netmask, b8 store
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
 
 	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_TCP_IP_CMD_HEADER);
+	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
 
 	/*	send command	*/
 	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_SET_IP);

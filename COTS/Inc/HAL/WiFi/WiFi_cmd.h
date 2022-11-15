@@ -11,7 +11,7 @@
 #define WIFI_REPLY_TERMINATOR		'\n'
 
 #define WIFI_WIFI_CMD_HEADER		"AT+CW"
-#define WIFI_TCP_IP_CMD_HEADER		"AT+CIP"
+#define WIFI_IP_CMD_HEADER			"AT+CIP"
 
 #define WIFI_DISABLE_ECHO			"ATE0\r\n"
 

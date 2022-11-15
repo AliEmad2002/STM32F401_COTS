@@ -8,7 +8,10 @@
 /*	LIB	*/
 #include "Std_Types.h"
 #include "Bit_Math.h"
+
+/*	MCAL	*/
 #include "RCC_interface.h"
+#include "NVIC_interface.h"
 
 /*	SELF	*/
 #include "STK_private.h"
@@ -127,6 +130,7 @@ void STK_voidStartTickMeasure(STK_TickMeasureType_t type)
 	if (type == STK_TickMeasureType_OverflowCount)
 	{
 		ovfCountEnabled = true;
+		NVIC_voidEnableInterrupt(NVIC_Interrupt_Systick);
 		STK_voidEnableInterrupt(STK_InterruptType_periodic);
 	}
 
@@ -168,7 +172,7 @@ u32 STK_u32GetElapsedTicks(void)
  */
 u64 STK_u64GetElapsedTicks(void)
 {
-	return ((u64)ovfCount+1) * (u64)MAX_u24 - (u64)STK->VAL;
+	return (((u64)ovfCount+1) << 24) - (u64)STK->VAL;
 }
 
 /*	notice that countFlag clears to zero once read	*/

@@ -35,7 +35,9 @@ typedef enum{
  * note: UART unit must be previously initialized with what is most compatible
  * with WiFi module.
  */
-void WiFi_voidInit(WiFi_t* module, GPIO_Pin_t rstPin, UART_UnitNumber_t uartUnitNumber);
+void WiFi_voidInit(
+	WiFi_t* module, GPIO_Pin_t rstPin,
+	UART_UnitNumber_t uartUnitNumber, u32 baudrate, u8 uartAfioMap);
 
 b8 WiFi_b8HardReset(WiFi_t* module);
 
@@ -47,13 +49,18 @@ b8 WiFi_b8ConnectToAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash);
 
 b8 WiFi_b8CreateAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash);
 
-b8 WiFi_b8ConnectToTCP(WiFi_t* module, char* address, char* port);
+b8 WiFi_b8SelectMultipleConnections(
+	WiFi_t* module, WiFi_MultiplieConnection_t mode);
 
-b8 WiFi_b8SelectMultipleConnections(WiFi_t* module, WiFi_MultiplieConnection_t mode);
+b8 WiFi_b8ConnectToTCP(WiFi_t* module, char* address, char* port, u8 linkId);
+
+b8 WiFi_b8ConnectToUDP(WiFi_t* module, char* address, char* port, u8 linkId);
 
 b8 WiFi_b8CreateTCP(WiFi_t* module, char* port);
 
 b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len);
+
+u64 WiFi_u64SendByteTCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId);
 
 u16 WiFi_u16ReadStringTCP(WiFi_t* module, char* byte, u8* senderId);
 
