@@ -355,7 +355,7 @@ b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
 	return valid;
 }
 
-u64 WiFi_u64SendByteTCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
+u64 WiFi_u64TCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
 {
 	/*	flush parasitic remaining data byte	*/
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
@@ -394,6 +394,11 @@ u64 WiFi_u64SendByteTCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
 
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
+
+	/*	wait for ack byte	*/
+	char str[WIFI_MAX_RESPONSE_LEN];
+	u8 senderId;
+	WiFi_u16ReadStringTCP(module, str, &senderId);
 
 	/*	calculate elapsed time	*/
 	u64 tElapsed = STK_u64GetElapsedTicks() - tSent;

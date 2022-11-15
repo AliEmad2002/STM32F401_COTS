@@ -60,7 +60,7 @@ b8 WiFi_b8CreateTCP(WiFi_t* module, char* port);
 
 b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len);
 
-u64 WiFi_u64SendByteTCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId);
+u64 WiFi_u64TCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId);
 
 u16 WiFi_u16ReadStringTCP(WiFi_t* module, char* byte, u8* senderId);
 
