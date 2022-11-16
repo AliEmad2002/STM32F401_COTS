@@ -18,6 +18,9 @@
 #include "Delay_interface.h"
 #include "Debug_active.h"
 #include "diag/trace.h"
+#include <stdlib.h>
+#include <stdio.h>
+
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -341,7 +344,7 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 
 	u16 i = 0;
 	u16 j = 0;
-	while(lastTimeStamp - startTime < tickInterval)
+	while((lastTimeStamp - startTime) < tickInterval)
 	{
 		if (GET_BIT(UART[UARTn]->SR, 5))
 		{
@@ -379,7 +382,6 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 		}
 		lastTimeStamp = STK_u64GetElapsedTicks();
 	}
-
 
 	#if DEBUG_ON
 	trace_printf("received: \"");

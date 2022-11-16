@@ -14,6 +14,7 @@
 #include <string.h>
 #include "Error_Handler_interface.h"
 #include "Debug_active.h"
+#include "My_String.h"
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -316,7 +317,7 @@ b8 WiFi_b8CreateTCP(WiFi_t* module, char* port)
 	return valid;
 }
 
-b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
+b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len, u8 linkId)
 {
 	/*	flush parasitic remaining data byte	*/
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
@@ -329,6 +330,8 @@ b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len)
 
 	/*	send command params	*/
 	UART_voidSendByteEcho(module->uartUnitNumber, '=');
+	UART_voidSendByteEcho(module->uartUnitNumber, linkId + '0');
+	UART_voidSendByteEcho(module->uartUnitNumber, ',');
 	char tempStr[6];
 	sprintf(tempStr, "%u", len);
 	UART_voidSendStringEcho(module->uartUnitNumber, tempStr);
@@ -395,6 +398,11 @@ u64 WiFi_u64TCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
 	/*	validate execution	*/
 	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
 
+	#if DEBUG_ON
+	if (!valid)
+		trace_printf("could not send byte!\n");
+	#endif
+
 	/*	wait for ack byte	*/
 	char str[WIFI_MAX_RESPONSE_LEN];
 	u8 senderId;
@@ -418,10 +426,14 @@ u16 WiFi_u16ReadStringTCP(WiFi_t* module, char* str, u8* senderId)
 	char headerStr[20];
 
 	/*	receive header string (until ':')	*/
-	u16 headerLen = UART_u16ReadString(module->uartUnitNumber, headerStr, ':', 1);
+	(void)UART_u16ReadString(module->uartUnitNumber, headerStr, ':', 1);
+
+	/*	extract senderId	*/
+	u8 firstColonIndex = String_s16Find(headerStr, ',', 0);
+	*senderId = headerStr[firstColonIndex + 1] - '0';
 
 	/*	extract payload length from the header	*/
-	u16 payloadLen = headerStr[headerLen - 2] - '0';
+	u16 payloadLen = atoi(&headerStr[firstColonIndex + 3]);
 
 	/*	receive payload	*/
 	for (u16 i = 0; i < payloadLen; i++)
@@ -429,9 +441,6 @@ u16 WiFi_u16ReadStringTCP(WiFi_t* module, char* str, u8* senderId)
 		UART_enumReciveByte(module->uartUnitNumber, str + i);
 	}
 	str[payloadLen] = '\0';
-
-	/*	extract senderId	*/
-	*senderId = headerStr[headerLen - 4] - '0';
 
 	return payloadLen;
 }

@@ -58,7 +58,7 @@ b8 WiFi_b8ConnectToUDP(WiFi_t* module, char* address, char* port, u8 linkId);
 
 b8 WiFi_b8CreateTCP(WiFi_t* module, char* port);
 
-b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len);
+b8 WiFi_b8SendStringTCP(WiFi_t* module, char* str, u16 len, u8 linkId);
 
 u64 WiFi_u64TCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId);
 

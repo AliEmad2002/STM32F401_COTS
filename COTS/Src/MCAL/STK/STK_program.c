@@ -31,7 +31,7 @@ static void (*interruptCallback)(void) = NULL;
 static b8 interruptOnlyOnce = false;
 static b8 hadExcutedIsr = false;
 
-static u32 ovfCount = 0;
+static u64 ovfCount = 1;	//	instead of adding in "getElapsed()", init 1
 static b8 ovfCountEnabled = false;
 
 /*
@@ -149,7 +149,7 @@ void STK_voidStopTickMeasure(STK_TickMeasureType_t type)
 	{
 		ovfCountEnabled = false;
 		STK_voidDisableInterrupt();
-		ovfCount = 0;
+		ovfCount = 1;	//	instead of adding in "getElapsed()", init 1
 	}
 
 	STK->LOAD = 0;
@@ -172,7 +172,7 @@ u32 STK_u32GetElapsedTicks(void)
  */
 u64 STK_u64GetElapsedTicks(void)
 {
-	return (((u64)ovfCount+1) << 24) - (u64)STK->VAL;
+	return ((ovfCount << 24) - ((u64)(STK->VAL)));
 }
 
 /*	notice that countFlag clears to zero once read	*/
@@ -195,7 +195,6 @@ u32 STK_u32GetTicksPerSecond(void)
 /*	Handler	*/
 void SysTick_Handler(void)
 {
-	return;
 	/* increment ovfCount (if enabled)	*/
 	if (ovfCountEnabled)
 		ovfCount++;
