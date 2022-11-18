@@ -5,14 +5,27 @@
  *      Author: Ali Emad Ali
  */
 
-/******************************************************************************
- * Not yet implemented functions in this file:
- * 	- "TIM_voidSetInterruptCallback()"
- *****************************************************************************/
-
 #ifndef INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 #define INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 
+
+/******************************************************************************
+ * Callback functions.
+ * (all of type void (void))
+ *
+ * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
+ * so far it is implemented only for advanced timers.
+ *****************************************************************************/
+typedef enum{
+	TIM_ADV_Vector_BRK,
+	TIM_ADV_Vector_UP,
+	TIM_ADV_Vector_TRG_COM,
+	TIM_ADV_Vector_CC
+}TIM_ADV_Vector_t;
+
+/*	sets callback of an advanced timer unit	*/
+void TIM_voidSetCallbackADV(
+	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void));
 
 /******************************************************************************
  * Enums of timers and channels.
@@ -245,6 +258,7 @@ void TIM_voidDisableExternalClock(u8 unitNumber);
  * 	- Input capture filter.
  */
 typedef enum{
+	TIM_SamplingMode_F_DeadTimeBy1_N_1,		//	i.e.: no filter
 	TIM_SamplingMode_F_Internal_N_2,
 	TIM_SamplingMode_F_Internal_N_4,
 	TIM_SamplingMode_F_Internal_N_8,
@@ -473,8 +487,8 @@ void TIM_voidClearStatusFlag(u8 unitNumber, TIM_Status_t status);
  *****************************************************************************/
 typedef enum{
 	TIM_CaptureCompareSelection_Output,
-	TIM_CaptureCompareSelection_Input_TI2,
-	TIM_CaptureCompareSelection_Input_TI1,
+	TIM_CaptureCompareSelection_Input_TI_NPlus1,	//	'N' is the channel num.
+	TIM_CaptureCompareSelection_Input_TI_N,
 	TIM_CaptureCompareSelection_Input_TRC,	// works only if an internal trigger
 											// input is selected first.
 }TIM_CaptureCompareSelection_t;
@@ -659,6 +673,12 @@ b8 TIM_b8IsMainOutputEnabled(u8 unitNumber);
  *****************************************************************************/
 /*	reads capture/compare channel's register	*/
 u16 TIM_u16GetCCR(u8 unitNumber, TIM_Channel_t channel);
+
+/*	returns port and pin of certain AFIO mapping	*/
+u8 TIM_u8GetPortAndPin(u8 unitNumber, TIM_Channel_t ch, u8 map);
+
+/*	inits channel pin as input	*/
+void TIM_voidInitInputPin(u8 unitNumber, TIM_Channel_t ch, u8 map);
 
 
 /******************************************************************************

@@ -25,7 +25,48 @@
 /******************************************************************************
  * Callback functions.
  * (all of type void (void))
+ *
+ * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
+ * so far it is implemented only for advanced timers.
  *****************************************************************************/
+static void (*advTimCallbacks[2][4])(void);
+
+/*	sets callback of an advanced timer unit	*/
+void TIM_voidSetCallbackADV(
+	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void))
+{
+	switch (unitNumber)
+	{
+	case 1:
+		advTimCallbacks[0][vect] = callback;
+		break;
+
+	case 8:
+		advTimCallbacks[1][vect] = callback;
+		break;
+
+	default:
+		ErrorHandler_voidExecute(0);
+		break;
+	}
+}
+
+/*	IRQ's	*/
+/*	flag clearing is user's responsibility	*/
+void TIM1_BRK_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_BRK]();}
+void TIM8_BRK_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_BRK]();}
+
+void TIM1_UP_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_UP]();}
+void TIM8_UP_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_UP]();}
+
+void TIM1_TRG_COM_IRQHandler(void){
+	advTimCallbacks[0][TIM_ADV_Vector_TRG_COM]();}
+void TIM8_TRG_COM_IRQHandler(void){
+	advTimCallbacks[1][TIM_ADV_Vector_TRG_COM]();}
+
+void TIM1_CC_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_CC]();}
+void TIM8_CC_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_CC]();}
+
 
 
 
@@ -224,7 +265,9 @@ void TIM_voidSetDeadTimeMultiplier(
 {
 	if (IS_ADV_GP(unitNumber))
 	{
-		EDT_REG(TIM[unitNumber]->CR1, TIM_CR1_CKD_0, multiplier, 2);
+		//EDT_REG(TIM[unitNumber]->CR1, TIM_CR1_CKD_0, multiplier, 2);
+		TIM[unitNumber]->CR1 =
+			(TIM[unitNumber]->CR1 & (0b11 << 8)) | (multiplier << 8);
 	}
 
 	else
@@ -362,7 +405,7 @@ void TIM_voidSetInputCaptureFilter(
 		EDT_REG(
 			TIM[unitNumber]->CCMR[channelNumber / 3],
 			TIM_CCMR_ICxF_0 + (channelNumber - (channelNumber / 3) * 4) * 8,
-			filter, 3);
+			filter, 4);
 	}
 
 	else
@@ -1235,177 +1278,8 @@ u16 TIM_u16GetCCR(u8 unitNumber, TIM_Channel_t channel)
 	}
 }
 
-
-/******************************************************************************
- * Capture compare channel enable.
- *
- * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
- * for more information.
- *****************************************************************************/
-/*	enables capture/compare channel	*/
-void TIM_voidEnableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel)
-{
-	if (TIM_b8IsChannelInTimer(unitNumber, channel))
-	{
-		if (channel > TIM_Channel_2)
-			channel -= 2;
-
-		SET_BIT(TIM[unitNumber]->CCER, TIM_CCER_CC1E + channel * 4);
-	}
-
-	else
-	{
-		ErrorHandler_voidExecute(0);
-	}
-}
-
-/*	disables capture/compare channel	*/
-void TIM_voidDisableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel)
-{
-	if (TIM_b8IsChannelInTimer(unitNumber, channel))
-	{
-		if (channel > TIM_Channel_2)
-			channel -= 2;
-
-		CLR_BIT(TIM[unitNumber]->CCER, TIM_CCER_CC1E + channel * 4);
-	}
-
-	else
-	{
-		ErrorHandler_voidExecute(0);
-	}
-}
-
-
-/******************************************************************************
- * Signal generation.
- *
- * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
- * for more information.
- *****************************************************************************/
-/*
- * returns CLK_INT in Hz.
- *
- * same for both timer 1 and timer 8.
- */
-u32 TIM_u32GetClockInternalInput(u8 unitNumber)
-{
-	RCC_Bus_t bus;
-	if (IS_ON_APB2(unitNumber))
-		bus = RCC_Bus_APB2;
-
-	else if (!IS_TIM_UNIT_NUMBER(unitNumber))
-	{
-		ErrorHandler_voidExecute(0);
-		return 0;
-	}
-
-	else
-		bus = RCC_Bus_APB1;
-
-	u32 abpFreq = RCC_u32GetBusClk(bus);
-
-	if (RCC_u16GetBusPrescaler(bus) == 1)
-		return abpFreq;
-	else
-		return 2 * abpFreq;
-}
-
-/*
- * sets prescaler of timer unit, to achieve certain overflow frequency.
- * calls error handler if requested frequency is not achievable.
- *
- * assumes that clock source is internal clock source, as it's the most common
- * when using PWM.
- *
- * returns actual running overflow frequency in milli-Hz.
- */
-u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz)
-{
-	u32 clkInt = TIM_u32GetClockInternalInput(unitNumber);
-
-	/*	Frequency = clk_int / (2^16 * prescaler)	*/
-	u32 prescaler = clkInt / ((u32)freqHz << 16);
-
-	if (prescaler == 0  ||  prescaler > 65535)
-	{
-		ErrorHandler_voidExecute(0);
-		return 0;
-	}
-
-	else
-	{
-		TIM[unitNumber]->PSC = prescaler;
-		return ((u64)clkInt*1000) / (u64)(prescaler << 16);
-	}
-}
-
-/*
- * inits channel as PWM output, configures and connects channel's non inverting
- * GPIO pin.
- * returns actual running overflow frequency in milli-Hz.
- */
-u64 TIM_u64InitPWM(u8 unitNumber, TIM_Channel_t ch, u16 freqHz)
-{
-	/*	use internal clock	*/
-	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
-		TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Disabled);
-
-	/*	set frequency (prescaler)	*/
-	u64 mHzFreq = TIM_u64SetFreq(unitNumber, freqHz);
-
-	/*	select up-counting mode	*/
-	if (IS_ADV_GP_2_TO_5(unitNumber))
-		TIM_voidSetCounterDirection(unitNumber, TIM_CountDirection_Up);
-
-	/*	load TCNT with zero	*/
-	TIM[unitNumber]->CNT = 0;
-
-	/*	load ARR with maximum value	*/
-	TIM[unitNumber]->ARR = (1 << 16) - 1;
-
-	/*	load repetition counter with zero	*/
-	TIM[unitNumber]->RCR = 0;
-
-	/*	init capture compare channel as output	*/
-	TIM_voidSetCaptureCompareSelection(
-		unitNumber, ch, TIM_CaptureCompareSelection_Output);
-
-	/*	enable output compare fast	*/
-	TIM_voidEnableOutputCompareFast(unitNumber, ch);
-
-	/*	enable output compare preload	*/
-	TIM_voidEnableOutputComparePreload(unitNumber, ch);
-
-	/*	select output compare mode	*/
-	TIM_voidSetOutputCompareMode(unitNumber, ch, TIM_OutputCompareMode_PWM1);
-
-	/*	select capture/compare channel polarity	*/
-	TIM_voidSetCaptureCompareChannelPolarity(
-		unitNumber, ch, TIM_ChannelPolarity_ActiveHigh_RisingEdge);
-
-	/*	enable capture/compare channel	*/
-	TIM_voidEnableCaptureCompareChannel(unitNumber, ch);
-
-	if (IS_ADV(unitNumber))
-	{
-		/*	enable auto reload	*/
-		TIM_voidEnableAutoReloadPreload(unitNumber);
-		/*	enable main output	*/
-		TIM_voidEnableMainOutput(unitNumber);
-	}
-
-	return mHzFreq;
-}
-
-/*
- * configures and connects channel's non inverting GPIO pin.
- *
- * notice that output compare channels connected to GP pins are only the
- * following:
- *
- */
-void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
+/*	returns port and pin of certain AFIO mapping	*/
+u8 TIM_u8GetPortAndPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 {
 	u8 const portAndPinArr[14][2][4] =
 	{
@@ -1596,6 +1470,214 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 
 	u8 portAndPin = portAndPinArr[unitNumber-1][map][ch];
 
+	return portAndPin;
+}
+
+/*	inits channel pin as input	*/
+void TIM_voidInitInputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
+{
+	u8 portAndPin = TIM_u8GetPortAndPin(unitNumber, ch, map);
+
+	if (portAndPin == 0xFF)
+	{
+		ErrorHandler_voidExecute(0);
+	}
+
+	else
+	{
+		u8 pin = portAndPin & 0x0F;
+		GPIO_PortName_t port = (GPIO_PortName_t)(portAndPin >> 4);
+
+		#if DEBUG_ON == 1
+		trace_printf(
+			"capture compare channel initialized on port: %u, pin: %u\n",
+			port, pin);
+		#endif
+
+		GPIO_voidSetPinMode(port, pin, GPIO_Mode_Input_Pull);
+		GPIO_voidSetPinOutputLevel(port, pin, GPIO_OutputLevel_Low);
+		GPIO_voidSetPinOutputSpeed(port, pin, GPIO_OutputSpeed_Null);
+
+		if (unitNumber == 3)
+			AFIO_voidRemap(AFIO_Peripheral_TIM3, map);
+		else if (unitNumber == 2)
+			AFIO_voidRemap(AFIO_Peripheral_TIM2, map);
+	}
+}
+
+/******************************************************************************
+ * Capture compare channel enable.
+ *
+ * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
+ * for more information.
+ *****************************************************************************/
+/*	enables capture/compare channel	*/
+void TIM_voidEnableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel)
+{
+	if (TIM_b8IsChannelInTimer(unitNumber, channel))
+	{
+		if (channel > TIM_Channel_2)
+			channel -= 2;
+
+		SET_BIT(TIM[unitNumber]->CCER, TIM_CCER_CC1E + channel * 4);
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+}
+
+/*	disables capture/compare channel	*/
+void TIM_voidDisableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel)
+{
+	if (TIM_b8IsChannelInTimer(unitNumber, channel))
+	{
+		if (channel > TIM_Channel_2)
+			channel -= 2;
+
+		CLR_BIT(TIM[unitNumber]->CCER, TIM_CCER_CC1E + channel * 4);
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+}
+
+
+/******************************************************************************
+ * Signal generation.
+ *
+ * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
+ * for more information.
+ *****************************************************************************/
+/*
+ * returns CLK_INT in Hz.
+ *
+ * same for both timer 1 and timer 8.
+ */
+u32 TIM_u32GetClockInternalInput(u8 unitNumber)
+{
+	RCC_Bus_t bus;
+	if (IS_ON_APB2(unitNumber))
+		bus = RCC_Bus_APB2;
+
+	else if (!IS_TIM_UNIT_NUMBER(unitNumber))
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
+	}
+
+	else
+		bus = RCC_Bus_APB1;
+
+	u32 abpFreq = RCC_u32GetBusClk(bus);
+
+	if (RCC_u16GetBusPrescaler(bus) == 1)
+		return abpFreq;
+	else
+		return 2 * abpFreq;
+}
+
+/*
+ * sets prescaler of timer unit, to achieve certain overflow frequency.
+ * calls error handler if requested frequency is not achievable.
+ *
+ * assumes that clock source is internal clock source, as it's the most common
+ * when using PWM.
+ *
+ * returns actual running overflow frequency in milli-Hz.
+ */
+u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz)
+{
+	u32 clkInt = TIM_u32GetClockInternalInput(unitNumber);
+
+	/*	Frequency = clk_int / (2^16 * prescaler)	*/
+	u32 prescaler = clkInt / ((u32)freqHz << 16);
+
+	if (prescaler == 0  ||  prescaler > 65535)
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
+	}
+
+	else
+	{
+		TIM[unitNumber]->PSC = prescaler;
+		return ((u64)clkInt*1000) / (u64)(prescaler << 16);
+	}
+}
+
+/*
+ * inits channel as PWM output, configures and connects channel's non inverting
+ * GPIO pin.
+ * returns actual running overflow frequency in milli-Hz.
+ */
+u64 TIM_u64InitPWM(u8 unitNumber, TIM_Channel_t ch, u16 freqHz)
+{
+	/*	use internal clock	*/
+	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
+		TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Disabled);
+
+	/*	set frequency (prescaler)	*/
+	u64 mHzFreq = TIM_u64SetFreq(unitNumber, freqHz);
+
+	/*	select up-counting mode	*/
+	if (IS_ADV_GP_2_TO_5(unitNumber))
+		TIM_voidSetCounterDirection(unitNumber, TIM_CountDirection_Up);
+
+	/*	load TCNT with zero	*/
+	TIM[unitNumber]->CNT = 0;
+
+	/*	load ARR with maximum value	*/
+	TIM[unitNumber]->ARR = (1 << 16) - 1;
+
+	/*	load repetition counter with zero	*/
+	TIM[unitNumber]->RCR = 0;
+
+	/*	init capture compare channel as output	*/
+	TIM_voidSetCaptureCompareSelection(
+		unitNumber, ch, TIM_CaptureCompareSelection_Output);
+
+	/*	enable output compare fast	*/
+	TIM_voidEnableOutputCompareFast(unitNumber, ch);
+
+	/*	enable output compare preload	*/
+	TIM_voidEnableOutputComparePreload(unitNumber, ch);
+
+	/*	select output compare mode	*/
+	TIM_voidSetOutputCompareMode(unitNumber, ch, TIM_OutputCompareMode_PWM1);
+
+	/*	select capture/compare channel polarity	*/
+	TIM_voidSetCaptureCompareChannelPolarity(
+		unitNumber, ch, TIM_ChannelPolarity_ActiveHigh_RisingEdge);
+
+	/*	enable capture/compare channel	*/
+	TIM_voidEnableCaptureCompareChannel(unitNumber, ch);
+
+	if (IS_ADV(unitNumber))
+	{
+		/*	enable auto reload	*/
+		TIM_voidEnableAutoReloadPreload(unitNumber);
+		/*	enable main output	*/
+		TIM_voidEnableMainOutput(unitNumber);
+	}
+
+	return mHzFreq;
+}
+
+/*
+ * configures and connects channel's non inverting GPIO pin.
+ *
+ * notice that output compare channels connected to GP pins are only the
+ * following:
+ *
+ */
+void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
+{
+	u8 portAndPin = TIM_u8GetPortAndPin(unitNumber, ch, map);
+
 	if (portAndPin == 0xFF)
 	{
 		ErrorHandler_voidExecute(0);
@@ -1636,50 +1718,6 @@ void TIM_voidSetDutyCycle(u8 unitNumber, TIM_Channel_t ch, u16 duty)
 		ch -= 2;
 
 	(&(TIM[unitNumber]->CCR1))[ch] = duty;
-}
-
-
-/******************************************************************************
- * IRQ's
- *****************************************************************************/
-void TIM1_BRK_IRQHandler(void)
-{
-
-}
-
-void TIM1_UP_IRQHandler(void)
-{
-
-}
-
-void TIM1_TRG_COM_IRQHandler(void)
-{
-
-}
-
-void TIM1_CC_IRQHandler(void)
-{
-
-}
-
-void TIM8_BRK_IRQHandler(void)
-{
-
-}
-
-void TIM8_UP_IRQHandler(void)
-{
-
-}
-
-void TIM8_TRG_COM_IRQHandler(void)
-{
-
-}
-
-void TIM8_CC_IRQHandler(void)
-{
-
 }
 
 

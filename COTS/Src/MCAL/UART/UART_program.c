@@ -42,7 +42,7 @@ typedef struct{
 	void (* ORE)(void);
 }callBacks_t;
 
-callBacks_t callBacksArr[3];
+static callBacks_t callBacksArr[3];
 
 void UART_voidInit(
 	UART_UnitNumber_t UARTn,
