@@ -1022,6 +1022,26 @@ void TIM_voidDisableOnePulseMode(u8 unitNumber)
 	}
 }
 
+/******************************************************************************
+ * Master mode selection.
+ *
+ * Available only for:
+ * Advanced timer.
+ * 2 to 5 GP timers.
+ *****************************************************************************/
+void TIM_voidSetMasterModeSelection(u8 unitNumber, TIM_MasterMode_t mode)
+{
+	if (IS_ADV_GP_2_TO_5(unitNumber))
+	{
+		EDT_REG(TIM[unitNumber]->CR2, TIM_CR2_MMS_0, mode, 3);
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+}
+
 
 /******************************************************************************
  * Output compare control.
@@ -1721,6 +1741,135 @@ void TIM_voidSetDutyCycle(u8 unitNumber, TIM_Channel_t ch, u16 duty)
 }
 
 
+/******************************************************************************
+ * Advanced 32-bit tick-counter.
+ *
+ * Connects two advanced or 2 to 5 GP timers in master/salve topology. The
+ * master counts @ clk_int, the slave counts on master's OVF.
+ *
+ * (giving a total OVF time of ~1min @ 72MHz).
+ *****************************************************************************/
+/*
+ * checks if "slaveUnitNumber" has "masterUnitNumber" as an input on one of its
+ * ITRx lines.
+ *
+ * returns slave's ITR line number if available, otherwise returns -1
+ */
+s8 TIM_s8FindConnection(u8 masterUnitNumber, u8 slaveUnitNumber)
+{
+	if (
+		IS_ADV_GP_2_TO_5(masterUnitNumber)	&&
+		IS_ADV_GP_2_TO_5(slaveUnitNumber)	&&
+		masterUnitNumber != slaveUnitNumber
+		)
+	{
+		/*
+		 * connection (taken from "TIMx Internal trigger connection" tables in
+		 * datasheet.
+		 */
+		const u8 connections[6][4] = {
+			/*	TIM1 connections as a slave	*/
+			{5, 2, 3, 4},
+
+			/*	TIM2 connections as a slave	*/
+			{1, 8, 3, 4},
+
+			/*	TIM3 connections as a slave	*/
+			{1, 2, 5, 4},
+
+			/*	TIM4 connections as a slave	*/
+			{1, 2, 3, 8},
+
+			/*	TIM5 connections as a slave	*/
+			{2, 3, 4, 8},
+
+			/*	TIM8 connections as a slave	*/
+			{1, 2, 4, 5}
+
+		};
+
+		/*	fixing slaveUnitnumber for array indexing	*/
+		if (slaveUnitNumber == 8)
+			slaveUnitNumber = 5;
+		else
+			slaveUnitNumber--;
+
+		/*
+		 * searching for "masterUnitNumber" in "connections[slaveUnitNumber]"
+		 */
+		for (u8 i = 0; i < 4; i++)
+		{
+			if (connections[slaveUnitNumber][i] == masterUnitNumber)
+				return i;
+		}
+		return -1;
+
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+		return -1;
+	}
+}
+
+/*	inits ATC	*/
+void TIM_voidInitAdvancedTickCounter(
+	TIM_AdvancedTickCounter_t* ATC, u8 masterUnitNumber, u8 slaveUnitNumber)
+{
+	/*	finding ITR connection	*/
+	s8 connection = TIM_s8FindConnection(masterUnitNumber, slaveUnitNumber);
+
+	/*	if there's a connection	*/
+	if (connection != -1)
+	{
+		/*######################################################################
+		 * 							Init master
+		 *####################################################################*/
+
+		/*	disable slave mode (use clk_int as clk source)	*/
+		TIM_voidSetSlaveMode(masterUnitNumber, TIM_SlaveMode_Disabled);
+
+		/*	set it up-counting	*/
+		TIM_voidSetCounterDirection(masterUnitNumber, TIM_CountDirection_Up);
+
+		/*	set update request source to OVF/UNF only	*/
+		TIM_voidSetUpdateSource(masterUnitNumber, TIM_UpdateSource_OVF_UNF);
+
+		/*	init trigger output on update event	*/
+		TIM_voidSetMasterModeSelection(masterUnitNumber, TIM_MasterMode_Update);
+
+		/*######################################################################
+		 * 							Init slave
+		 *####################################################################*/
+
+		/*	set slave mode trigger source on ITR_<connection>	*/
+		TIM_voidSetTriggerSource(
+			slaveUnitNumber, TIM_TriggerSource_ITR0 + connection);
+
+		/*
+		 * set slave mode selection on external clock mode 1, so that slave clk
+		 * source is the ITR_<connection> rising edge.
+		 */
+		TIM_voidSetSlaveMode(slaveUnitNumber, TIM_SlaveMode_ExternalClock);
+
+		/*	set it up-counting	*/
+		TIM_voidSetCounterDirection(slaveUnitNumber, TIM_CountDirection_Up);
+
+		/*######################################################################
+		 * 						Init object's variables
+		 *####################################################################*/
+		ATC->masterUnitNumber = masterUnitNumber;
+		ATC->slaveUnitNumber = slaveUnitNumber;
+		ATC->CNTMasterPtr = &TIM[masterUnitNumber]->CNT;
+		ATC->CNTSlavePtr = &TIM[slaveUnitNumber]->CNT;
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+}
 
 
 

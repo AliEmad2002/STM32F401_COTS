@@ -8,6 +8,7 @@
 #ifndef INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 #define INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 
+#include "TIM_private.h"
 
 /******************************************************************************
  * Callback functions.
@@ -595,6 +596,26 @@ void TIM_voidDisableOnePulseMode(u8 unitNumber);
 
 
 /******************************************************************************
+ * Master mode selection.
+ *
+ * Available only for:
+ * Advanced timer.
+ * 2 to 5 GP timers.
+ *****************************************************************************/
+typedef enum{
+	TIM_MasterMode_Reset,
+	TIM_MasterMode_Enable,
+	TIM_MasterMode_Update,
+	TIM_MasterMode_CC11IF,
+	TIM_MasterMode_OC1REF,
+	TIM_MasterMode_OC2REF,
+	TIM_MasterMode_OC3REF,
+	TIM_MasterMode_OC4REF
+}TIM_MasterMode_t;
+
+void TIM_voidSetMasterModeSelection(u8 unitNumber, TIM_MasterMode_t mode);
+
+/******************************************************************************
  * Output compare control.
  *
  * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
@@ -741,6 +762,88 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map);
  * high polarity fist, (which happens in the function: "TIM_ADV_voidInitPWM()")
  */
 void TIM_voidSetDutyCycle(u8 unitNumber, TIM_Channel_t ch, u16 duty);
+
+
+/******************************************************************************
+ * Advanced 32-bit tick-counter.
+ *
+ * Connects two advanced or 2 to 5 GP timers in master/salve topology. The
+ * master counts @ clk_int, the slave counts on master's OVF.
+ *
+ * (giving a total OVF time of ~1min @ 72MHz).
+ *****************************************************************************/
+typedef struct{
+	u8 masterUnitNumber;
+	u8 slaveUnitNumber;
+	volatile u32* CNTMasterPtr;
+	volatile u32* CNTSlavePtr;
+}TIM_AdvancedTickCounter_t;
+
+/*
+ * checks if "slaveUnitNumber" has "masterUnitNumber" as an input on one of its
+ * ITRx lines.
+ *
+ * returns slave's ITR line number if available, otherwise returns -1
+ */
+s8 TIM_s8FindConnection(u8 masterUnitNumber, u8 slaveUnitNumber);
+
+/*	inits ATC	*/
+void TIM_voidInitAdvancedTickCounter(
+	TIM_AdvancedTickCounter_t* ATC, u8 masterUnitNumber, u8 slaveUnitNumber);
+
+/*
+ * Starts counting.
+ *
+ * "ATCptr" is of type: "TIM_AdvancedTickCounter_t*"
+ */
+#define TIM_ENABLE_ADVANCED_TICK_COUNTER(ATC){				\
+	SET_BIT(TIM[(ATC).masterUnitNumber]->CR1, TIM_CR1_CEN);	\
+	SET_BIT(TIM[(ATC).slaveUnitNumber]->CR1, TIM_CR1_CEN);}
+
+/*
+ * Stops counting.
+ *
+ * "ATCptr" is of type: "TIM_AdvancedTickCounter_t*"
+ */
+#define TIM_DISABLE_ADVANCED_TICK_COUNTER(ATC){				\
+	CLR_BIT(TIM[(ATC).masterUnitNumber]->CR1, TIM_CR1_CEN);	\
+	CLR_BIT(TIM[(ATC).slaveUnitNumber]->CR1, TIM_CR1_CEN);}
+
+/*
+ * Resets counting.
+ *
+ * "ATCptr" is of type: "TIM_AdvancedTickCounter_t*"
+ */
+#define TIM_RESET_ADVANCED_TICK_COUNTER(ATC){	\
+	TIM[(ATC).masterUnitNumber]->CNT = 0;		\
+	TIM[(ATC).slaveUnitNumber]->CNT = 0;}
+
+/*
+ * Gets CNT value.
+ *
+ * "ATCptr" is of type: "TIM_AdvancedTickCounter_t*"
+ */
+#define TIM_GET_ADVANCED_TICK_COUNTER_CNT(ATC)(		\
+		(*((ATC).CNTSlavePtr) << 16) | (*((ATC).CNTMasterPtr)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #endif /* INCLUDE_MCAL_TIM_TIM_INTERFACE_H_ */

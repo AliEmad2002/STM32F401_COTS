@@ -12,6 +12,7 @@
 #include "Std_Types.h"
 #include "Bit_Math.h"
 #include "Target_config.h"
+#include "Debug_active.h"
 
 /*	MCAL	*/
 #include "FPEC_interface.h"
@@ -115,7 +116,24 @@ void RCC_voidSysClockInit(void)
 
 	/*	Setting system clock switch	*/
 	EDT_REG(RCC->CFGR, RCC_SW_0, RCC_SYS_SOURCE, 2);
-	while((GET_BIT(RCC->CFGR, RCC_SWS_0) | GET_BIT(RCC->CFGR, RCC_SWS_1)<<1) !=  RCC_SYS_SOURCE);
+	while(
+		(GET_BIT(RCC->CFGR, RCC_SWS_0) | (GET_BIT(RCC->CFGR, RCC_SWS_1)<<1)) !=
+		RCC_SYS_SOURCE);
+
+	#if DEBUG_ON == 1
+		#if RCC_SYS_SOURCE == RCC_SYSCLOCKSWITCH_HSI
+			trace_printf(
+				"clk source is HSI, sys_clk = %lu Hz\n", RCC_HSI_CLK);
+
+		#elif RCC_SYS_SOURCE == RCC_SYSCLOCKSWITCH_HSE
+			trace_printf(
+				"clk source is HSE, sys_clk = %lu Hz\n", RCC_HSE_CLK);
+
+		#elif RCC_SYS_SOURCE == RCC_SYSCLOCKSWITCH_PLL
+			trace_printf(
+				"clk source is PLL, sys_clk = %lu Hz\n", pllOutputFreq);
+		#endif
+	#endif
 	/*	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~		*/
 }
 

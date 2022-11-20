@@ -52,7 +52,7 @@ typedef struct{
 #define TIM14	((volatile TIM_t*)0x40002000)
 
 
-volatile TIM_t* const TIM[] = {
+static volatile TIM_t* const TIM[] = {
 	NULL, TIM1, TIM2, TIM3, TIM4, TIM5, TIM6,
 	TIM7, TIM8, TIM9, TIM10, TIM11, TIM12, TIM13,
 	TIM14};
@@ -66,6 +66,9 @@ volatile TIM_t* const TIM[] = {
 #define TIM_CR1_CMS_0		5
 #define TIM_CR1_ARPE		7
 #define TIM_CR1_CKD_0		8
+
+/*	CR2 bits	*/
+#define TIM_CR2_MMS_0		4
 
 /*	SMCR bits	*/
 #define TIM_SMCR_SMS_0		0

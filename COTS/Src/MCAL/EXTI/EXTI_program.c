@@ -62,7 +62,7 @@ void EXTI_voidEnableLine(u8 line)
 	SET_BIT(EXTI->IMR, line);
 }
 
-void EXTI_voidDisbleLine(u8 line)
+void EXTI_voidDisableLine(u8 line)
 {
 	CLR_BIT(EXTI->IMR, line);
 }

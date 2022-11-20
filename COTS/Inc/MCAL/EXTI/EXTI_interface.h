@@ -34,7 +34,7 @@ void EXTI_voidDisbleLineInterrupt(u8 line);
 
 void EXTI_voidEnableLine(u8 line);
 
-void EXTI_voidDisbleLine(u8 line);
+void EXTI_voidDisableLine(u8 line);
 
 /*	EXTI event can wake up the MCU but won't generate ISR call	*/
 void EXTI_voidEnableLineEvent(u8 line);

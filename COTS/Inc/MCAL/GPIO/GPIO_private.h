@@ -59,7 +59,7 @@ typedef struct{
 
 #endif
 
-volatile GPIO_t* const GPIO[] = {GPIO_A, GPIO_B, GPIO_C};
+static volatile GPIO_t* const GPIO[] = {GPIO_A, GPIO_B, GPIO_C};
 
 #endif	/*	GPIO_PRIVATE_H_	*/
 

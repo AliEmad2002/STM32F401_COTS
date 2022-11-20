@@ -17,6 +17,7 @@
 #define GPIO_INTERFACE_H_
 
 #include "Target_config.h"
+#include "GPIO_private.h"
 
 typedef enum{
 	/*	PORTA pins	*/
