@@ -12,6 +12,7 @@
 #ifndef EXTI_INTERFACE_H_
 #define EXTI_INTERFACE_H_
 
+#include "EXTI_private.h"
 
 typedef enum{
 	EXTI_Trigger_risingEdge	=	0,
@@ -33,8 +34,10 @@ void EXTI_voidEnableLineInterrupt(u8 line);
 void EXTI_voidDisbleLineInterrupt(u8 line);
 
 void EXTI_voidEnableLine(u8 line);
+#define EXTI_ENABLE_LINE(line) (SET_BIT(EXTI->IMR, (line)))
 
 void EXTI_voidDisableLine(u8 line);
+#define EXTI_DISABLE_LINE(line) (CLR_BIT(EXTI->IMR, (line)))
 
 /*	EXTI event can wake up the MCU but won't generate ISR call	*/
 void EXTI_voidEnableLineEvent(u8 line);
@@ -56,5 +59,7 @@ void EXTI_voidSetCallBack(u8 line, void(*callBack)(void));
  * port is selectable.
  */
 void EXTI_voidMapLine(u8 line, GPIO_PortName_t port);
+
+#define EXTI_CLEAR_FLAG(line)  (SET_BIT(EXTI->PR, (line)))
 
 #endif /* EXTI_INTERFACE_H_ */
