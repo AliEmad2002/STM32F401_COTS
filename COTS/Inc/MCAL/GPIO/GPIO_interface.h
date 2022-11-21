@@ -183,6 +183,7 @@ void GPIO_voidSetPinOutputSpeed(GPIO_PortName_t port, u8 pin, GPIO_OutputSpeed_t
 
 /*	reading pin input level	*/
 b8 GPIO_b8ReadPinDigital(GPIO_PortName_t port, u8 pin);
+#define GPIO_DIGITAL_READ(port, pin) (GET_BIT(GPIO[(port)]->IDR, (pin)))
 
 /*	setting pin output level	*/
 void GPIO_voidSetPinOutputLevel(GPIO_PortName_t port, u8 pin, GPIO_OutputLevel_t level);
