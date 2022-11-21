@@ -824,7 +824,7 @@ void TIM_voidInitAdvancedTickCounter(
  * "ATCptr" is of type: "TIM_AdvancedTickCounter_t*"
  */
 #define TIM_GET_ADVANCED_TICK_COUNTER_CNT(ATC)(		\
-		(*((ATC).CNTSlavePtr) << 16) | (*((ATC).CNTMasterPtr)))
+		((volatile u32)(*((ATC).CNTSlavePtr) << 16) | (*((ATC).CNTMasterPtr))))
 
 
 
