@@ -124,6 +124,10 @@ void SPI_voidEnableOutput(SPI_UnitNumber_t unitNumber, SPI_Directional_Mode_t di
  */
 void SPI_voidDisableOutput(SPI_UnitNumber_t unitNumber, SPI_Directional_Mode_t directionalMode);
 
+/*	inits AFIO/GPIO pins	*/
+void SPI_voidInitPins(
+	SPI_UnitNumber_t unitNumber, u8 map, b8 initNSS, b8 initMISO, b8 initMOSI);
+
 /*
  * enables SPI peripheral interrupt.
  */

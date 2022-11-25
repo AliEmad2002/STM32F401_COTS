@@ -1710,7 +1710,9 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 
 		#if DEBUG_ON == 1
 		trace_printf(
-			"PWM channel initialized on port: %u, pin: %u\n", port, pin);
+			"TIM%u, Ch%u channel initialized on port: %u, pin: %u\n",
+			unitNumber, ((ch > TIM_Channel_2) ? (ch - 2) : ch),
+			port, pin);
 		#endif
 
 		GPIO_voidSetPinMode(port, pin, GPIO_Mode_AF_PushPull);

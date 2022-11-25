@@ -10,10 +10,13 @@
 #include "Std_Types.h"
 #include "Bit_Math.h"
 #include "Target_config.h"
+#include "Debug_active.h"
+#include "Error_Handler_interface.h"
 
 /*	MCAL	*/
 #include "STK_interface.h"
 #include "DMA_interface.h"
+#include "GPIO_interface.h"
 
 
 /*	SELF	*/
@@ -106,6 +109,120 @@ void SPI_voidDisableOutput(SPI_UnitNumber_t unitNumber, SPI_Directional_Mode_t d
 		break;
 	default:	//case SPI_Directional_Mode_Bi:
 		CLR_BIT(SPI[unitNumber]->CR1, SPI_CR1_BIDIOE);
+	}
+}
+
+/*	inits AFIO/GPIO pins	*/
+void SPI_voidInitPins(
+	SPI_UnitNumber_t unitNumber, u8 map, b8 initNSS, b8 initMISO, b8 initMOSI)
+{
+	const u8 SPI1mapArr[2][4] = {
+		/*	map = 0	*/
+		/*		NSS			SCK			MISO			MOSI	*/
+		{	GPIO_Pin_A4, GPIO_Pin_A5, GPIO_Pin_A6, GPIO_Pin_A7},
+
+		/*	map = 1	*/
+		/*		NSS			SCK			MISO			MOSI	*/
+		{	GPIO_Pin_A15, GPIO_Pin_B3, GPIO_Pin_B4, GPIO_Pin_B5}
+	};
+
+	const u8 SPI2mapArr[4] =
+		/*		NSS			SCK			MISO			MOSI	*/
+		{	GPIO_Pin_B12, GPIO_Pin_B13, GPIO_Pin_B14, GPIO_Pin_B15};
+
+	/*	extract data to be used	*/
+	const u8* toUseMap;
+	switch (unitNumber)
+	{
+		case SPI_UnitNumber_1:
+			if (map > 1)
+			{
+				ErrorHandler_voidExecute(0);
+				return;
+			}
+			else
+				toUseMap = SPI1mapArr[map];
+			break;
+		default:	// case SPI_UnitNumber_2:
+			toUseMap = SPI2mapArr;
+			break;
+	}
+
+	/*	init NSS pin	*/
+	if (initNSS)
+	{
+		if (
+			GET_BIT(SPI[unitNumber]->CR1, SPI_CR1_MSTR) ==
+			SPI_Mode_Master)
+		{
+			GPIO_voidSetPinMode(
+				toUseMap[0]/16, toUseMap[0]%16, GPIO_Mode_AF_PushPull);
+			GPIO_voidSetPinOutputSpeed(
+				toUseMap[0]/16, toUseMap[0]%16, GPIO_OutputSpeed_50MHz);
+
+			#if DEBUG_ON
+			trace_printf(
+				"SPI%u NSS output: port %u, pin %u\n", unitNumber + 1,
+				toUseMap[0]/16, toUseMap[0]%16);
+			#endif
+		}
+		else
+		{
+			GPIO_voidSetPinMode(
+				toUseMap[0]/16, toUseMap[0]%16, GPIO_Mode_Input_Pull);
+			GPIO_voidSetPinOutputSpeed(
+				toUseMap[0]/16, toUseMap[0]%16, GPIO_OutputSpeed_Null);
+			GPIO_voidSetPinOutputLevel(
+				toUseMap[0]/16, toUseMap[0]%16, GPIO_OutputLevel_High);
+
+			#if DEBUG_ON
+			trace_printf(
+				"SPI%u NSS input: port %u, pin %u\n", unitNumber + 1,
+				SPI1mapArr[map][0]/16, SPI1mapArr[map][0]%16);
+			#endif
+		}
+	}
+
+	/*	init SCK pin	*/
+	GPIO_voidSetPinMode(
+		toUseMap[1]/16, toUseMap[1]%16, GPIO_Mode_AF_PushPull);
+	GPIO_voidSetPinOutputSpeed(
+		toUseMap[1]/16, toUseMap[1]%16, GPIO_OutputSpeed_50MHz);
+
+	#if DEBUG_ON
+	trace_printf(
+		"SPI%u SCK: port %u, pin %u\n", unitNumber + 1,
+		SPI1mapArr[map][1]/16, SPI1mapArr[map][1]%16);
+	#endif
+
+	/*	init MISO pin	*/
+	if (initMISO)
+	{
+		GPIO_voidSetPinMode(
+			toUseMap[2]/16, toUseMap[2]%16, GPIO_Mode_Input_Floating);
+		GPIO_voidSetPinOutputSpeed(
+			toUseMap[2]/16, toUseMap[2]%16, GPIO_OutputSpeed_Null);
+
+		#if DEBUG_ON
+		trace_printf(
+			"SPI%u MISO: port %u, pin %u\n", unitNumber + 1,
+			SPI1mapArr[map][2]/16, SPI1mapArr[map][2]%16);
+		#endif
+	}
+
+	/*	init MOSI pin	*/
+	if (initMOSI)
+	{
+		GPIO_voidSetPinMode(
+			toUseMap[3]/16, toUseMap[3]%16, GPIO_Mode_AF_PushPull);
+		GPIO_voidSetPinOutputSpeed(
+			toUseMap[3]/16, toUseMap[3]%16, GPIO_OutputSpeed_50MHz);
+
+		#if DEBUG_ON
+		trace_printf(
+			"SPI%u MOSI: port %u, pin %u\n", unitNumber + 1,
+			SPI1mapArr[map][3]/16, SPI1mapArr[map][3]%16);
+		#endif
 	}
 }
 
