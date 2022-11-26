@@ -25,22 +25,6 @@
 
 
 /*
- * enables SPI peripheral
- */
-void SPI_voidEnableUnit(SPI_UnitNumber_t unitNumber)
-{
-	SET_BIT(SPI[unitNumber]->CR1, SPI_CR1_SPE);
-}
-
-/*
- * disables SPI peripheral
- */
-void SPI_voidDisableUnit(SPI_UnitNumber_t unitNumber)
-{
-	CLR_BIT(SPI[unitNumber]->CR1, SPI_CR1_SPE);
-}
-
-/*
  * inits a SPI peripheral.
  * output is disabled by default, use "SPI_voidEnableOutput()" to enable it.
  * high buadrates could cause byte shifting, which is not preferred.
@@ -300,38 +284,30 @@ void SPIvoidMasterDisableSlaveSelectOutput(SPI_UnitNumber_t unitNumber)
 }
 
 /*
- * returns the value of the given flag
- */
-b8 SPI_b8ReadFlag(SPI_UnitNumber_t unitNumber, SPI_Flag_t flag)
-{
-	return GET_BIT(SPI[unitNumber]->SR, flag);
-}
-
-/*
  * transceives data.
  */
 u16 SPI_u16TransceiveData(SPI_UnitNumber_t unitNumber, u16 data)
 {
 	/*	wait for SPI peripheral to finish whatever it is doing	*/
-	while(SPI_b8ReadFlag(unitNumber, SPI_Flag_Busy));
+	while(SPI_GET_FLAG(unitNumber, SPI_Flag_Busy));
 
 	/*
 	 * wait for Tx buffer to be empty
 	 * (to avoid overrunning last sent word/dword)
 	 */
-	while(!SPI_b8ReadFlag(unitNumber, SPI_Flag_TxEmpty));
+	while(!SPI_GET_FLAG(unitNumber, SPI_Flag_TxEmpty));
 
 	/*	load data register	*/
 	SPI[unitNumber]->DR = data;
 
 	/*	wait for SPI peripheral to finish transceiving	*/
-	while(SPI_b8ReadFlag(unitNumber, SPI_Flag_Busy));
+	while(SPI_GET_FLAG(unitNumber, SPI_Flag_Busy));
 
 	/*
 	 * wait for Rx buffer to be filled (not empty)
 	 * (to avoid overrunning last received word/dword)
 	 */
-	while(!SPI_b8ReadFlag(unitNumber, SPI_Flag_RxNotEmpty));
+	while(!SPI_GET_FLAG(unitNumber, SPI_Flag_RxNotEmpty));
 
 	/*	return received data	*/
 	u16 received = SPI[unitNumber]->DR;
@@ -346,13 +322,7 @@ u16 SPI_u16TransceiveData(SPI_UnitNumber_t unitNumber, u16 data)
 void SPI_voidTransmitData(SPI_UnitNumber_t unitNumber, u16 data)
 {
 	/*	wait for SPI peripheral to finish whatever it is doing	*/
-	while(SPI_b8ReadFlag(unitNumber, SPI_Flag_Busy));
-
-	/*
-	 * wait for Tx buffer to be empty
-	 * (to avoid overrunning last sent word/dword)
-	 */
-	while(!SPI_b8ReadFlag(unitNumber, SPI_Flag_TxEmpty));
+	while(SPI_GET_FLAG(unitNumber, SPI_Flag_Busy));
 
 	/*	load data register	*/
 	SPI[unitNumber]->DR = data;

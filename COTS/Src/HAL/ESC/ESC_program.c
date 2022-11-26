@@ -32,7 +32,8 @@ void ESC_voidInit(
 	TIM_voidDisableCounter(timerUnitNumber);
 
 	u64 mHzFreq =
-		TIM_u64InitPWM(timerUnitNumber, timerChannel, freqHz);
+		TIM_u64InitPWM(timerUnitNumber, timerChannel,
+		TIM_OutputCompareMode_PWM1, freqHz);
 
 	TIM_voidInitOutputPin(timerUnitNumber, timerChannel, afioTimerMap);
 

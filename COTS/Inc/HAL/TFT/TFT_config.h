@@ -14,7 +14,7 @@
  * then draw the rectangles.
  * takes less iterations, but causes frame shatter in some applications.
  */
-//#define BG_THEN_RECTANGLES
+#define BG_THEN_RECTANGLES
 
 /*
  * un-commenting this option will make the TFT treat the background

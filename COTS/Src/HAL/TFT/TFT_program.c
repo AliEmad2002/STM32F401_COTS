@@ -10,15 +10,18 @@
 #include "Std_Types.h"
 #include "Bit_Math.h"
 #include "Delay_interface.h"
+#include "Img_config.h"
 #include "Img_interface.h"
 
 /*	MCAL	*/
 #include "GPIO_interface.h"
+#include "TIM_interface.h"
 #include "SPI_interface.h"
 
 /*	SELF	*/
-#include "TFT_interface.h"
 #include "TFT_config.h"
+#include "TFT_interface.h"
+
 
 
 
@@ -30,7 +33,9 @@
  * initializes GPIO pins reset and A0.
  * SPI and timer peripheral must be previously initialized.
  */
-void TFT_voidInit(TFT_t* tftPtr, SPI_UnitNumber_t _spiUnit, GPIO_Pin_t _rstPin, GPIO_Pin_t _A0Pin)
+void TFT_voidInit(
+	TFT_t* tftPtr, SPI_UnitNumber_t _spiUnit, GPIO_Pin_t _rstPin,
+	GPIO_Pin_t _A0Pin)
 {
 	/*	store pins data and init pins	*/
 	tftPtr->rstPin 	= _rstPin % 16;
@@ -49,33 +54,40 @@ void TFT_voidInit(TFT_t* tftPtr, SPI_UnitNumber_t _spiUnit, GPIO_Pin_t _rstPin, 
 	TFT_voidReset(tftPtr);
 
 	/*	sleep out cmd	*/
-	TFT_voidWriteCmd(tftPtr, 0x11);
-	TFT_voidWriteCmd(tftPtr, 0x11);
+	TFT_WRITE_CMD(tftPtr, 0x11);
+	TFT_WRITE_CMD(tftPtr, 0x11);
 
 	/*	TFT self init time	*/
 	Delay_voidBlockingDelayMs(150);
 
 	/*	set color mode (always RGB565, perfect for STM32)	*/
-	TFT_voidWriteCmd(tftPtr, 0x3A);
-	TFT_voidWriteData(tftPtr, 0x05);
+	TFT_WRITE_CMD(tftPtr, 0x3A);
+	TFT_WRITE_DATA(tftPtr, 0x05);
 
 	/*	start display	*/
-	TFT_voidWriteCmd(tftPtr, 0x29);
+	TFT_WRITE_CMD(tftPtr, 0x29);
 
 	/*	set start position at (0, 0)	*/
-	TFT_voidSetBoundaries(tftPtr, (Point_t){0, 0}, (Point_t){128, 160});
+	TFT_SET_BOUNDARIES(tftPtr, ((Point_t){0, 0}), ((Point_t){128, 160}));
 }
 
-void TFT_voidWriteCmd(TFT_t* tftPtr, u16 cmd)
+/*	inits PWM channel to control TFT LED brightness	*/
+void TFT_voidInitBrightnessControl(
+	TFT_t* tftPtr, u8 bcTimUnitNumber, TIM_Channel_t bcTimChannel, u32 freq,
+	u8 map)
 {
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_Low);
-	SPI_voidTransmitData(tftPtr->spiUnit, cmd);
-}
+	/*
+	 * using PWM2 as control is by convention going to be through a PNP
+	 * transistor.	*/
+	TIM_u64InitPWM(
+		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, freq);
 
-void TFT_voidWriteData(TFT_t* tftPtr, u16 data)
-{
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
-	SPI_voidTransmitData(tftPtr->spiUnit, data);
+	TIM_voidInitOutputPin(bcTimUnitNumber, bcTimChannel, map);
+
+	TIM_voidEnableCounter(bcTimUnitNumber);
+
+	tftPtr->bcTimUnitNumber = bcTimUnitNumber;
+	tftPtr->bcTimChannel = bcTimChannel;
 }
 
 /*
@@ -83,51 +95,25 @@ void TFT_voidWriteData(TFT_t* tftPtr, u16 data)
  */
 void TFT_voidReset(TFT_t* tftPtr)
 {
-	GPIO_voidSetPinOutputLevel(tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
+	GPIO_voidSetPinOutputLevel(
+		tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
 	Delay_voidBlockingDelayUs(100);
-	//STK_voidBusyWait(100);
 
-	GPIO_voidSetPinOutputLevel(tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_Low);
+	GPIO_voidSetPinOutputLevel(
+		tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_Low);
 	Delay_voidBlockingDelayUs(1);
-	//STK_voidBusyWait(1);
 
-	GPIO_voidSetPinOutputLevel(tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
+	GPIO_voidSetPinOutputLevel(
+		tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
 	Delay_voidBlockingDelayUs(100);
-	//STK_voidBusyWait(100);
 
-	GPIO_voidSetPinOutputLevel(tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_Low);
+	GPIO_voidSetPinOutputLevel(
+		tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_Low);
 	Delay_voidBlockingDelayUs(100);
-	//STK_voidBusyWait(100);
 
-	GPIO_voidSetPinOutputLevel(tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
+	GPIO_voidSetPinOutputLevel(
+		tftPtr->rstPort, tftPtr->rstPin, GPIO_OutputLevel_High);
 	Delay_voidBlockingDelayMs(120);
-	//STK_voidBusyWait(120000);
-}
-
-
-void TFT_voidSetBoundaries(TFT_t* tftPtr, Point_t point1, Point_t point2)
-{
-	/*	won't use "TFT_voidWriteData()", to save GPIO time.	*/
-
-	/*	set x boundaries command	*/
-	TFT_voidWriteCmd(tftPtr, 0x2A);
-	/*	write data mode	*/
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
-	/*	send x boundaries	*/
-	SPI_voidTransmitData(tftPtr->spiUnit, point1.x >> 8);
-	SPI_voidTransmitData(tftPtr->spiUnit, point1.x & 0xFF);
-	SPI_voidTransmitData(tftPtr->spiUnit, point2.x >> 8);
-	SPI_voidTransmitData(tftPtr->spiUnit, point2.x & 0xFF);
-
-	/*	set y boundaries command	*/
-	TFT_voidWriteCmd(tftPtr, 0x2B);
-	/*	write data mode	*/
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
-	/*	send y boundaries	*/
-	SPI_voidTransmitData(tftPtr->spiUnit, point1.y >> 8);
-	SPI_voidTransmitData(tftPtr->spiUnit, point1.y & 0xFF);
-	SPI_voidTransmitData(tftPtr->spiUnit, point2.y >> 8);
-	SPI_voidTransmitData(tftPtr->spiUnit, point2.y & 0xFF);
 }
 
 /*
@@ -142,51 +128,50 @@ void TFT_voidSetBoundaries(TFT_t* tftPtr, Point_t point1, Point_t point2)
  */
 void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 {
-	#ifdef BG_THEN_RECTANGLES
 	/*	draw background color	*/
-	TFT_voidSetBoundaries(tftPtr, (Point_t){0, 0}, (Point_t){128, 160});
-	TFT_voidWriteCmd(tftPtr, 0x2C);
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
+	TFT_SET_BOUNDARIES(tftPtr, ((Point_t){0, 0}), ((Point_t){128, 160}));
+	TFT_WRITE_CMD(tftPtr, 0x2C);
+	SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
+	GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
 
 	for (u16 i = 0; i < 20480; i++)
 	{
-		SPI_voidTransmitData(tftPtr->spiUnit, framePtr->backgroundColor.code565 >> 8);
-		SPI_voidTransmitData(tftPtr->spiUnit, framePtr->backgroundColor.code565 & 0xFF);
+		SPI_TRANSMIT(tftPtr->spiUnit, framePtr->backgroundColor.code565);
 	}
 
 	/*	draw rectangles	*/
 	for (u16 iRect = 0; iRect < framePtr->rectCount; iRect++)
 	{
-		Rectangle_t* rectPtr = framePtr->rectPtrArr[iRect];
-
 		/*	set TFT boundaries	*/
-		TFT_voidSetBoundaries(tftPtr, rectPtr->pointStart, rectPtr->pointEnd);
+		TFT_SET_BOUNDARIES(
+			tftPtr,
+			framePtr->rectArr[iRect].pointStart,
+			framePtr->rectArr[iRect].pointEnd);
 
 		/*	write color	*/
-		TFT_voidWriteCmd(tftPtr, 0x2C);
-		GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
-		u16 n = (rectPtr->pointEnd.y - rectPtr->pointStart.y + 1) * (rectPtr->pointEnd.x - rectPtr->pointStart.x + 1);
+		TFT_WRITE_CMD(tftPtr, 0x2C);
+		SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
+		GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
+		u16 n =
+			(framePtr->rectArr[iRect].pointEnd.y -
+			framePtr->rectArr[iRect].pointStart.y + 1) *
+			(framePtr->rectArr[iRect].pointEnd.x -
+			framePtr->rectArr[iRect].pointStart.x + 1);
 		for (u16 i = 0; i < n; i++)
 		{
-			SPI_voidTransmitData(tftPtr->spiUnit, rectPtr->color.code565 >> 8);
-			SPI_voidTransmitData(tftPtr->spiUnit, rectPtr->color.code565 & 0xFF);
+			SPI_TRANSMIT(
+				tftPtr->spiUnit, framePtr->rectArr[iRect].color.code565);
 		}
 	}
-
-	#else
-	/*	draw pixel by pixel	*/
-	TFT_voidSetBoundaries(tftPtr, (Point_t){0, 0}, (Point_t){128, 160});
-	TFT_voidWriteCmd(tftPtr, 0x2C);
-	GPIO_voidSetPinOutputLevel(tftPtr->A0Port, tftPtr->A0Pin, GPIO_OutputLevel_High);
-	Color_t color;
-	for (u16 y = 0; y < 160; y++)
-	{
-		for (u16 x = 0; x < 128; x++)
-		{
-			color = IMG_ColorTypeGetPixel(framePtr, (Point_t){x, y});
-			SPI_voidTransmitData(tftPtr->spiUnit, color.code565 >> 8);
-			SPI_voidTransmitData(tftPtr->spiUnit, color.code565 & 0xFF);
-		}
-	}
-	#endif
 }
+
+
+
+
+
+
+
+
+
+
+

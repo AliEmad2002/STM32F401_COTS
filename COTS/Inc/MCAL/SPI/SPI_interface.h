@@ -8,6 +8,8 @@
 #ifndef _SPI_SPI_INTERFACE_H_
 #define _SPI_SPI_INTERFACE_H_
 
+#include "SPI_private.h"
+
 typedef enum{
 	SPI_UnitNumber_1,
 	SPI_UnitNumber_2,
@@ -94,14 +96,20 @@ typedef enum{
 }SPI_DMA_Request_t;
 
 /*
- * enables SPI peripheral
+ * Enables SPI peripheral.
+ *
+ * "unitNumber" is of type "SPI_UnitNumber_t".
  */
-void SPI_voidEnableUnit(SPI_UnitNumber_t unitNumber);
+#define SPI_ENABLE_PERIPHERAL(unitNumber)		\
+	(SET_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_SPE))
 
 /*
- * disables SPI peripheral
+ * Disables SPI peripheral.
+ *
+ * "unitNumber" is of type "SPI_UnitNumber_t".
  */
-void SPI_voidDisableUnit(SPI_UnitNumber_t unitNumber);
+#define SPI_DISABLE_PERIPHERAL(unitNumber)		\
+	(CLR_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_SPE))
 
 /*
  * inits a SPI peripheral.
@@ -127,6 +135,47 @@ void SPI_voidDisableOutput(SPI_UnitNumber_t unitNumber, SPI_Directional_Mode_t d
 /*	inits AFIO/GPIO pins	*/
 void SPI_voidInitPins(
 	SPI_UnitNumber_t unitNumber, u8 map, b8 initNSS, b8 initMISO, b8 initMOSI);
+
+/*
+ * returns the value of the given flag.
+ *
+ * "unitNumber" is of type: "SPI_UnitNumber_t",
+ * "flag" is of type: "SPI_Flag_t"
+ */
+#define SPI_GET_FLAG(unitNumber, flag)			\
+	(GET_BIT(SPI[(unitNumber)]->SR, (flag)))
+
+/*
+ * sets frame format (8/16 bits).
+ * as frame format can only be changed when SPI peripheral is disabled, these
+ * two macros wait until peripheral finishes its current operation, then
+ * disables it, sets the frame format, and enables it again.
+ *
+ * "unitNumber" is of type "SPI_UnitNumber_t".
+ */
+#define SPI_SET_FRAME_FORMAT_8_BIT(unitNumber)			\
+{														\
+	/*	wait for busy flag to be cleared by HW	*/		\
+	while(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy));	\
+	/*	disable peripheral	*/							\
+	SPI_DISABLE_PERIPHERAL((unitNumber));				\
+	/*	Set frame format	*/							\
+	CLR_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_DFF);		\
+	/*	enable peripheral	*/							\
+	SPI_ENABLE_PERIPHERAL((unitNumber));				\
+}
+
+#define SPI_SET_FRAME_FORMAT_16_BIT(unitNumber)			\
+{														\
+	/*	wait for busy flag to be cleared by HW	*/		\
+	while(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy));	\
+	/*	disable peripheral	*/							\
+	SPI_DISABLE_PERIPHERAL((unitNumber));				\
+	/*	Set frame format	*/							\
+	SET_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_DFF);		\
+	/*	enable peripheral	*/							\
+	SPI_ENABLE_PERIPHERAL((unitNumber));				\
+}
 
 /*
  * enables SPI peripheral interrupt.
@@ -171,11 +220,6 @@ void SPIvoidMasterEnableSlaveSelectOutput(SPI_UnitNumber_t unitNumber);
 void SPIvoidMasterDisableSlaveSelectOutput(SPI_UnitNumber_t unitNumber);
 
 /*
- * returns the value of the given flag
- */
-b8 SPI_b8ReadFlag(SPI_UnitNumber_t unitNumber, SPI_Flag_t flag);
-
-/*
  * transceives data
  */
 u16 SPI_u16TransceiveData(SPI_UnitNumber_t unitNumber, u16 data);
@@ -185,6 +229,13 @@ u16 SPI_u16TransceiveData(SPI_UnitNumber_t unitNumber, u16 data);
  * (faster when interfacing devices that do not response)
  */
 void SPI_voidTransmitData(SPI_UnitNumber_t unitNumber, u16 data);
+
+/*	macro that does same as the previous function	*/
+#define SPI_TRANSMIT(unitNumber, data)                 \
+{                                                      \
+	while(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy));  \
+	SPI[(unitNumber)]->DR = (data);                    \
+}
 
 /*	enables DMA request	*/
 void SPI_voidEnableDMA(SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request);

@@ -44,7 +44,8 @@ void RGB_LED_voidInit(
 		TIM_voidDisableCounter(ledPtr->timUnitNumArr[i]);
 
 		(void)TIM_u64InitPWM(
-			ledPtr->timUnitNumArr[i], ledPtr->timChArr[i], freqHz);
+			ledPtr->timUnitNumArr[i], ledPtr->timChArr[i],
+			TIM_OutputCompareMode_PWM1, freqHz);
 
 		TIM_voidInitOutputPin(
 			ledPtr->timUnitNumArr[i], ledPtr->timChArr[i], tempTimMapArr[i]);

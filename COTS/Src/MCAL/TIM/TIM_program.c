@@ -1634,7 +1634,9 @@ u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz)
  * GPIO pin.
  * returns actual running overflow frequency in milli-Hz.
  */
-u64 TIM_u64InitPWM(u8 unitNumber, TIM_Channel_t ch, u16 freqHz)
+u64 TIM_u64InitPWM(
+	u8 unitNumber, TIM_Channel_t ch, TIM_OutputCompareMode_t pwmMode,
+	u16 freqHz)
 {
 	/*	use internal clock	*/
 	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
@@ -1667,7 +1669,10 @@ u64 TIM_u64InitPWM(u8 unitNumber, TIM_Channel_t ch, u16 freqHz)
 	TIM_voidEnableOutputComparePreload(unitNumber, ch);
 
 	/*	select output compare mode	*/
-	TIM_voidSetOutputCompareMode(unitNumber, ch, TIM_OutputCompareMode_PWM1);
+	if (pwmMode < TIM_OutputCompareMode_PWM1)
+		ErrorHandler_voidExecute(0);
+	else
+		TIM_voidSetOutputCompareMode(unitNumber, ch, pwmMode);
 
 	/*	select capture/compare channel polarity	*/
 	TIM_voidSetCaptureCompareChannelPolarity(
@@ -1726,10 +1731,10 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 }
 
 /*
- * sets active duty cycle of PWM signal.
+ * sets duty cycle of PWM signal.
  *
- * for less overhead, channel must be configured to PWM1 mode, with an active
- * high polarity fist, (which happens in the function: "TIM_ADV_voidInitPWM()")
+ * if channel was configured on PWM1 mode, "duty" will be the active duty, and
+ * vice-versa.
  *
  * skips range checking to reduce overhead, as it's used in a high rate. Hence,
  * user must be careful when to use it.

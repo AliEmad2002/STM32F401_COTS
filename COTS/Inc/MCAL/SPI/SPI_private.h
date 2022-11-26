@@ -26,7 +26,7 @@ typedef struct{
 #define SPI2	((volatile SPI_t*)0x40003800)
 #define SPI3	((volatile SPI_t*)0x40003C00)
 
-volatile SPI_t* const SPI[] = {SPI1, SPI2, SPI3};
+static volatile SPI_t* const SPI[] = {SPI1, SPI2, SPI3};
 
 
 #define SPI_CR1_CPHA		0
