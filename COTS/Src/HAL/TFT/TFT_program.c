@@ -117,6 +117,23 @@ void TFT_voidReset(TFT_t* tftPtr)
 }
 
 /*
+ * sends line color if point{x, y} is on the line. else, sends background color.
+ */
+#define TFT_SEND_LINE_COLOR_IF_ON_LINE (x, y, tftPtr, framePtr, i)            \
+{                                                                             \
+	if (IMG_IS_X_Y_ON_LINE((x), (y), (framePtr)->lineArr[i].color.code565))   \
+	{                                                                         \
+		SPI_TRANSMIT(                                                         \
+			(tftPtr)->spiUnit, (framePtr)->lineArr[i].color.code565);         \
+	}                                                                         \
+	else                                                                      \
+	{                                                                         \
+		SPI_TRANSMIT(                                                         \
+			(tftPtr)->spiUnit, (framePtr)->backgroundColor.code565);          \
+	}                                                                         \
+}
+
+/*
  * draws "frame" in the previously set rectangle:
  * {(xStart, yStart), (xEnd, yEnd)}.
  *
@@ -128,7 +145,9 @@ void TFT_voidReset(TFT_t* tftPtr)
  */
 void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 {
-	/*	draw background color	*/
+	/**************************************************************************
+	 * draw background color
+	 **************************************************************************/
 	TFT_SET_BOUNDARIES(tftPtr, ((Point_t){0, 0}), ((Point_t){128, 160}));
 	TFT_WRITE_CMD(tftPtr, 0x2C);
 	SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
@@ -139,28 +158,88 @@ void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 		SPI_TRANSMIT(tftPtr->spiUnit, framePtr->backgroundColor.code565);
 	}
 
-	/*	draw rectangles	*/
-	for (u16 iRect = 0; iRect < framePtr->rectCount; iRect++)
+	/**************************************************************************
+	 * draw lines
+	 * (lines are drawn before rectangles and text as it is faster this way).
+	 **************************************************************************/
+	for (u16 i = 0; i < framePtr->lineCount; i++)
 	{
-		/*	set TFT boundaries	*/
+		/*
+		 * set TFT boundaries.
+		 * (remember: in line definition, "pointStart" should exist before
+		 * "pointEnd").
+		 */
 		TFT_SET_BOUNDARIES(
 			tftPtr,
-			framePtr->rectArr[iRect].pointStart,
-			framePtr->rectArr[iRect].pointEnd);
+			framePtr->lineArr[i].pointStart,
+			framePtr->lineArr[i].pointEnd);
 
 		/*	write color	*/
 		TFT_WRITE_CMD(tftPtr, 0x2C);
 		SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
 		GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
 		u16 n =
-			(framePtr->rectArr[iRect].pointEnd.y -
-			framePtr->rectArr[iRect].pointStart.y + 1) *
-			(framePtr->rectArr[iRect].pointEnd.x -
-			framePtr->rectArr[iRect].pointStart.x + 1);
-		for (u16 i = 0; i < n; i++)
+			framePtr->lineArr[i].pointEnd.x +
+			framePtr->lineArr[i].pointEnd.y * 128 -
+			framePtr->lineArr[i].pointStart.x -
+			framePtr->lineArr[i].pointStart.y * 128;
+
+		/*	draw first line	*/
+		for (u16 x = framePtr->lineArr[i].pointStart.x; x < 128; x++)
+		{
+			TFT_SEND_LINE_COLOR_IF_ON_LINE(
+				x, framePtr->lineArr[i].pointStart.y, tftPtr, framePtr);
+		}
+
+		/*	draw next lines till the one before last	*/
+		for (
+			u16 y = framePtr->lineArr[i].pointStart.y + 1;
+			y < framePtr->lineArr[i].pointEnd.y;
+			y++
+		)
+		{
+			for (u16 x = 0; x < 128; x++)
+			{
+				if (IS_X_Y_ON_LINE(x, y))
+				{
+					SPI_TRANSMIT(
+						tftPtr->spiUnit, framePtr->lineArr[i].color.code565);
+				}
+				else
+				{
+					SPI_TRANSMIT(
+						tftPtr->spiUnit, framePtr->backgroundColor.code565);
+				}
+			}
+		}
+
+
+	}
+
+	/**************************************************************************
+	 * draw rectangles
+	 **************************************************************************/
+	for (u16 i = 0; i < framePtr->rectCount; i++)
+	{
+		/*	set TFT boundaries	*/
+		TFT_SET_BOUNDARIES(
+			tftPtr,
+			framePtr->rectArr[i].pointStart,
+			framePtr->rectArr[i].pointEnd);
+
+		/*	write color	*/
+		TFT_WRITE_CMD(tftPtr, 0x2C);
+		SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
+		GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
+		u16 n =
+			(framePtr->rectArr[i].pointEnd.y -
+			framePtr->rectArr[i].pointStart.y + 1) *
+			(framePtr->rectArr[i].pointEnd.x -
+			framePtr->rectArr[i].pointStart.x + 1);
+		for (u16 j = 0; j < n; j++)
 		{
 			SPI_TRANSMIT(
-				tftPtr->spiUnit, framePtr->rectArr[iRect].color.code565);
+				tftPtr->spiUnit, framePtr->rectArr[i].color.code565);
 		}
 	}
 }
