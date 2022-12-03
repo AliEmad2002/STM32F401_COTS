@@ -119,18 +119,18 @@ void TFT_voidReset(TFT_t* tftPtr)
 /*
  * sends line color if point{x, y} is on the line. else, sends background color.
  */
-#define TFT_SEND_LINE_COLOR_IF_ON_LINE (x, y, tftPtr, framePtr, i)            \
-{                                                                             \
-	if (IMG_IS_X_Y_ON_LINE((x), (y), (framePtr)->lineArr[i].color.code565))   \
-	{                                                                         \
-		SPI_TRANSMIT(                                                         \
-			(tftPtr)->spiUnit, (framePtr)->lineArr[i].color.code565);         \
-	}                                                                         \
-	else                                                                      \
-	{                                                                         \
-		SPI_TRANSMIT(                                                         \
-			(tftPtr)->spiUnit, (framePtr)->backgroundColor.code565);          \
-	}                                                                         \
+#define TFT_SEND_LINE_COLOR_IF_ON_LINE(x, y, tftPtr, framePtr, i)       \
+{                                                                       \
+	if (IMG_IS_X_Y_ON_LINE((x), (y), ((framePtr)->lineArr[i])))         \
+	{                                                                   \
+		SPI_TRANSMIT(                                                   \
+			(tftPtr)->spiUnit, (framePtr)->lineArr[i].color.code565);   \
+	}                                                                   \
+	else                                                                \
+	{                                                                   \
+		SPI_TRANSMIT(                                                   \
+			(tftPtr)->spiUnit, (framePtr)->backgroundColor.code565);    \
+	}                                                                   \
 }
 
 /*
@@ -178,17 +178,11 @@ void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 		TFT_WRITE_CMD(tftPtr, 0x2C);
 		SPI_SET_FRAME_FORMAT_16_BIT(tftPtr->spiUnit);
 		GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
-		u16 n =
-			framePtr->lineArr[i].pointEnd.x +
-			framePtr->lineArr[i].pointEnd.y * 128 -
-			framePtr->lineArr[i].pointStart.x -
-			framePtr->lineArr[i].pointStart.y * 128;
 
 		/*	draw first line	*/
 		for (u16 x = framePtr->lineArr[i].pointStart.x; x < 128; x++)
 		{
-			TFT_SEND_LINE_COLOR_IF_ON_LINE(
-				x, framePtr->lineArr[i].pointStart.y, tftPtr, framePtr);
+			TFT_SEND_LINE_COLOR_IF_ON_LINE(x, (framePtr->lineArr[i].pointStart.y), tftPtr, framePtr, i);
 		}
 
 		/*	draw next lines till the one before last	*/
@@ -200,7 +194,7 @@ void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 		{
 			for (u16 x = 0; x < 128; x++)
 			{
-				if (IS_X_Y_ON_LINE(x, y))
+				if (IMG_IS_X_Y_ON_LINE(x, y, framePtr->lineArr[i]))
 				{
 					SPI_TRANSMIT(
 						tftPtr->spiUnit, framePtr->lineArr[i].color.code565);
