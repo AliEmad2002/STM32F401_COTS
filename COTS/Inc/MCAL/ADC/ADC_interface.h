@@ -11,5 +11,4 @@
 
 
 
-
 #endif /* INCLUDE_MCAL_ADC_ADC_INTERFACE_H_ */

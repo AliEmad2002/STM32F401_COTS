@@ -5,4 +5,15 @@
  *      Author: Ali Emad Ali
  */
 
+/*	LIB	*/
+#include "Std_Types.h"
+#include "Bit_Math.h"
+
+/*	MCAL	*/
+
+
+/*	SELF	*/
+#include "ADC_interface.h"
+#include "ADC_private.h"
+
 
