@@ -4,9 +4,6 @@
  *  Created on:	Sep 22, 2022
  *  Author:		Ali Emad Ali
  *	
- *	Resources:
- *		*
- *
  */
 
 #ifndef HAL_DAC_DAC_INTERFACE_H_
