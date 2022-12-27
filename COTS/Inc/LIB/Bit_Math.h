@@ -31,9 +31,9 @@
  * val:		value that is going to replace whatever is in "reg" starting from "start" bit.
  * len:		length of val.
  */
-void BitMath_voidEditRegister(u64* regPtr, u8 start, u64 val, u8 len);
+void BitMath_voidEditRegister(u32* regPtr, u8 start, u32 val, u8 len);
 
-#define EDT_REG(reg, start, val, len)		BitMath_voidEditRegister((u64*)&(reg), start, val, len)
+#define EDT_REG(reg, start, val, len)		BitMath_voidEditRegister((u32*)&(reg), start, val, len)
 
 
 #endif /* BIT_MATH_H_ */

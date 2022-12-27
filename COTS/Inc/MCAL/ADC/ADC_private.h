@@ -37,5 +37,20 @@ typedef struct{
 
 static volatile ADC_t* const ADC[] = {ADC1, ADC2};
 
+/*	CR1 registers	*/
+#define CR1_AWDCH_0				0
+#define CR1_EOCIE				5
+#define CR1_AWDIE				6
+#define CR1_JEOCIE				7
+#define CR1_SCAN				8
+#define CR1_AWDSGL				9
+#define CR1_JAUTO				10
+#define CR1_DISCEN				11
+#define CR1_JDISCEN				12
+#define CR1_DISCNUM_0			13
+#define CR1_DUALMOD_0			16
+#define CR1_JAWDEN				22
+#define CR1_AWDEN				23
+
 
 #endif /* ADC_PRIVATE_H_ */
