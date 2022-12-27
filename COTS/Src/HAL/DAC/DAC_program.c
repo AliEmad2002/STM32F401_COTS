@@ -3,9 +3,6 @@
  *
  *  Created on:	Sep 22, 2022
  *  Author:		Ali Emad Ali
- *	
- *	Resources:
- *		*
  *
  */
 
