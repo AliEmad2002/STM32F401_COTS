@@ -52,5 +52,20 @@ static volatile ADC_t* const ADC[] = {ADC1, ADC2};
 #define CR1_JAWDEN				22
 #define CR1_AWDEN				23
 
+/*	CR2 registers	*/
+#define CR2_ADON				0
+#define CR2_CONT				1
+#define CR2_CAL					2
+#define CR2_RSTCAL				3
+#define CR2_DMA					8
+#define CR2_ALIGN				11
+#define CR2_JEXTSEL_0			12
+#define CR2_JEXTTRIG			15
+#define CR2_EXTSEL_0			17
+#define CR2_EXTTRIG				20
+#define CR2_JSWSTART			21
+#define CR2_SWSTART				22
+#define CR2_TSVREFE				23
+
 
 #endif /* ADC_PRIVATE_H_ */
