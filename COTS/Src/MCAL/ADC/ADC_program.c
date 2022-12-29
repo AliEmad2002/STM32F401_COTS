@@ -137,6 +137,25 @@ inline void ADC_voidDisableAWDInjectedCh(ADC_UnitNumber_t un)
 	CLR_BIT(ADC[un]->CR1, CR1_JAWDEN);
 }
 
+/*
+ * sets analog watchdog high threshold value.
+ * 'threshold' is 12-bit right aligned value. Remember that threshold checking
+ * in AWD happens before aligning converted value.
+ */
+inline void ADC_voidSetAWDHighThreshold(ADC_UnitNumber_t un, u16 threshold)
+{
+	ADC[un]->HTR = threshold;
+}
+
+/*
+ * sets analog watchdog high threshold value.
+ * 'threshold' is 12-bit right aligned value.
+ */
+inline void ADC_voidSetAWDLowThreshold(ADC_UnitNumber_t un, u16 threshold)
+{
+	ADC[un]->LTR = threshold;
+}
+
 /******************************************************************************
  * Interrupts:
  ******************************************************************************/
@@ -229,11 +248,11 @@ void ADC_voidSetCountDiscontinuousModeRegularCh(ADC_UnitNumber_t un, u8 n)
 {
 	if (n < 1  ||  n > 8)
 	{
-		ErrorHandler_voidExecute(ErrorHandler_ADC_ErrorSource_WrongDISCNUM);
+		ErrorHandler_voidExecute(ErrorHandler_ErrorSource_ADC_WrongDISCNUM);
 	}
 	else
 	{
-		EDT_REG(ADC[un]->CR1, CR1_DISCNUM_0, n, 3);
+		EDT_REG(ADC[un]->CR1, CR1_DISCNUM_0, n-1, 3);
 	}
 }
 
@@ -431,19 +450,120 @@ void ADC_voidSetSampleTime(
 	}
 }
 
+/******************************************************************************
+ * Offset (in injected mode only):
+ ******************************************************************************/
+/*
+ * sets offset to be subtracted from the converted value before storing the
+ * result in ADC_JDRx.
+ *
+ * 'offset' is unsigned 12-bit max.
+ */
+inline void ADC_voidSetOffset(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN,  u16 offset)
+{
+	ADC[un]->JOFR[seqN] = offset;
+}
 
+/******************************************************************************
+ * Group sequence:
+ *
+ * Notes:
+ * - in regular group, let sequence length be set to seqN, then the ADC converts
+ * as follows: SQ1 ==> SQ2 ==> ... ==> SQ_seqN
+ *
+ * - while in injected group, then the ADC converts as follows:
+ * JSQ_<5-seqN> ==> JSQ_<5-seqN +1> ==> JSQ4
+ * (refer to the example in page 250 of RM0008 rev21 datasheet).
+ ******************************************************************************/
+/*	sets regular group sequence	*/
+void ADC_voidSetSequenceRegular(
+	ADC_UnitNumber_t un, ADC_RegularSequenceNumber_t seqN,
+	ADC_ChannelNumber_t ch)
+{
+	if (seqN > ADC_RegularSequenceNumber_12)
+	{
+		EDT_REG(
+			ADC[un]->SQR1, (seqN - ADC_RegularSequenceNumber_13) * 5, ch, 5);
+	}
+	else if (seqN > ADC_RegularSequenceNumber_6)
+	{
+		EDT_REG(
+			ADC[un]->SQR2, (seqN - ADC_RegularSequenceNumber_7) * 5, ch, 5);
+	}
+	else
+	{
+		EDT_REG(
+			ADC[un]->SQR3, (seqN - ADC_RegularSequenceNumber_1) * 5, ch, 5);
+	}
+}
 
+/*
+ * sets regular group sequence length.
+ * 'len' is in the range: 1-conversion to 16 conversions.
+ */
+void ADC_voidSetSequenceLenRegular(ADC_UnitNumber_t un, u8 len)
+{
+	if (len < 1 || len > 16)
+	{
+		ErrorHandler_voidExecute(ErrorHandler_ErrorSource_ADC_WrongRegSeqLen);
+	}
+	else
+	{
+		EDT_REG(ADC[un]->SQR1, SQR1_L_0, len-1, 4);
+	}
+}
 
+/*	sets injected group sequence	*/
+inline void ADC_voidSetSequenceInjected(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN,
+	ADC_ChannelNumber_t ch)
+{
+	EDT_REG(ADC[un]->JSQR, seqN * 5, ch,5);
+}
 
+/*
+ * sets injected group sequence length.
+ * 'len' is in the range: 1-conversion to 4 conversions.
+ */
+void ADC_voidSetSequenceLenInjected(ADC_UnitNumber_t un, u8 len)
+{
+	if (len < 1 || len > 4)
+	{
+		ErrorHandler_voidExecute(ErrorHandler_ErrorSource_ADC_WrongInjSeqLen);
+	}
+	else
+	{
+		EDT_REG(ADC[un]->JSQR, JSQR_JL_0, len-1, 2);
+	}
+}
 
+/******************************************************************************
+ * Data reading:
+ ******************************************************************************/
+/*	reads data of injected conversions	*/
+inline u16 ADC_u16GetDataInjected(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN)
+{
+	return (u16)(ADC[un]->JDR[seqN]);
+}
 
+/*	reads data of regular conversions	*/
+inline u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un)
+{
+	return (u16)(ADC[un]->DR);
+}
 
-
-
-
-
-
-
+/*
+ * reads data of regular conversions in dual mode.
+ * ADC1_DR is in the first half word of the returned word.
+ * ADC2_DR is in the second half word of the returned word.
+ *
+ */
+inline u32 ADC_u32GetDataRegularDual(void)
+{
+	return ADC[ADC_UnitNumber_1]->DR;
+}
 
 
 

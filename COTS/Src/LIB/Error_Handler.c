@@ -30,7 +30,7 @@ void ErrorHandler(u32 errCode)
 }
 
 /*	error handler execution	*/
-void ErrorHandler_voidExecute(u32 errCode)
+void ErrorHandler_voidExecute(ErrorHandler_ErrorSource_t errSource)
 {
-	ERR_HANDLER(errCode);
+	ERR_HANDLER(errSource);
 }

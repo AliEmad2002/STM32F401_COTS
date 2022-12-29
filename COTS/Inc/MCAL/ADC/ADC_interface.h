@@ -19,6 +19,32 @@ typedef enum{
 }ADC_DataAlignment_t;
 
 typedef enum{
+	ADC_RegularSequenceNumber_1	,
+	ADC_RegularSequenceNumber_2 ,
+	ADC_RegularSequenceNumber_3 ,
+	ADC_RegularSequenceNumber_4 ,
+	ADC_RegularSequenceNumber_5 ,
+	ADC_RegularSequenceNumber_6 ,
+	ADC_RegularSequenceNumber_7 ,
+	ADC_RegularSequenceNumber_8 ,
+	ADC_RegularSequenceNumber_9 ,
+	ADC_RegularSequenceNumber_10,
+	ADC_RegularSequenceNumber_11,
+	ADC_RegularSequenceNumber_12,
+	ADC_RegularSequenceNumber_13,
+	ADC_RegularSequenceNumber_14,
+	ADC_RegularSequenceNumber_15,
+	ADC_RegularSequenceNumber_16
+}ADC_RegularSequenceNumber_t;
+
+typedef enum{
+	ADC_InjectedSequenceNumber_1,
+	ADC_InjectedSequenceNumber_2,
+	ADC_InjectedSequenceNumber_3,
+	ADC_InjectedSequenceNumber_4
+}ADC_InjectedSequenceNumber_t;
+
+typedef enum{
 	/*
 	 * in this enum, decimal point is represented by the '_'
 	 * ex: ADC_SampleTime_1_5 ==> means: sample time of 1.5 cycles
@@ -183,6 +209,19 @@ void ADC_voidEnableAWDInjectedCh(ADC_UnitNumber_t un);
 
 /*	disables analog watchdog on injected channels	*/
 void ADC_voidDisableAWDInjectedCh(ADC_UnitNumber_t un);
+
+/*
+ * sets analog watchdog high threshold value.
+ * 'threshold' is 12-bit right aligned value. Remember that threshold checking
+ * in AWD happens before aligning converted value.
+ */
+void ADC_voidSetAWDHighThreshold(ADC_UnitNumber_t un, u16 threshold);
+
+/*
+ * sets analog watchdog high threshold value.
+ * 'threshold' is 12-bit right aligned value.
+ */
+void ADC_voidSetAWDLowThreshold(ADC_UnitNumber_t un, u16 threshold);
 
 /******************************************************************************
  * Interrupts:
@@ -371,6 +410,68 @@ void ADC_voidDisableTemperatureSensor(void);
 void ADC_voidSetSampleTime(
 		ADC_UnitNumber_t un, ADC_ChannelNumber_t ch, ADC_SampleTime_t time);
 
+/******************************************************************************
+ * Offset (in injected mode only):
+ ******************************************************************************/
+/*
+ * sets offset to be subtracted from the converted value before storing the
+ * result in ADC_JDRx.
+ *
+ * 'offset' is unsigned 12-bit max.
+ */
+void ADC_voidSetOffset(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN,  u16 offset);
+
+/******************************************************************************
+ * Group sequence:
+ *
+ * Notes:
+ * - in regular group, let sequence length be set to seqN, then the ADC converts
+ * as follows: SQ1 ==> SQ2 ==> ... ==> SQ_seqN
+ *
+ * - while in injected group, then the ADC converts as follows:
+ * JSQ_<5-seqN> ==> JSQ_<5-seqN +1> ==> JSQ4
+ * (refer to the example in page 250 of RM0008 rev21 datasheet).
+ ******************************************************************************/
+/*	sets regular group sequence	*/
+void ADC_voidSetSequenceRegular(
+	ADC_UnitNumber_t un, ADC_RegularSequenceNumber_t seqN,
+	ADC_ChannelNumber_t ch);
+
+/*
+ * sets regular group sequence length.
+ * 'len' is in the range: 1-conversion to 16 conversions.
+ */
+void ADC_voidSetSequenceLenRegular(ADC_UnitNumber_t un, u8 len);
+
+/*	sets injected group sequence	*/
+void ADC_voidSetSequenceInjected(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN,
+	ADC_ChannelNumber_t ch);
+
+/*
+ * sets injected group sequence length.
+ * 'len' is in the range: 1-conversion to 4 conversions.
+ */
+void ADC_voidSetSequenceLenInjected(ADC_UnitNumber_t un, u8 len);
+
+/******************************************************************************
+ * Data reading:
+ ******************************************************************************/
+/*	reads data of injected conversions	*/
+u16 ADC_u16GetDataInjected(
+	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN);
+
+/*	reads data of regular conversions	*/
+u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un);
+
+/*
+ * reads data of regular conversions in dual mode.
+ * ADC1_DR is in the first half word of the returned word.
+ * ADC2_DR is in the second half word of the returned word.
+ *
+ */
+u32 ADC_u32GetDataRegularDual(void);
 
 #endif /* INCLUDE_MCAL_ADC_ADC_INTERFACE_H_ */
 

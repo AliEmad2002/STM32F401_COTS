@@ -15,20 +15,14 @@ typedef struct{
 	u32 CR2;
 	u32 SMPR1;
 	u32 SMPR2;
-	u32 JOFR1;
-	u32 JOFR2;
-	u32 JOFR3;
-	u32 JOFR4;
+	u32 JOFR[4];
 	u32 HTR;
 	u32 LTR;
 	u32 SQR1;
 	u32 SQR2;
 	u32 SQR3;
 	u32 JSQR;
-	u32 JDR1;
-	u32 JDR2;
-	u32 JDR3;
-	u32 JDR4;
+	u32 JDR[4];
 	u32 DR;
 }ADC_t;
 
@@ -66,6 +60,12 @@ static volatile ADC_t* const ADC[] = {ADC1, ADC2};
 #define CR2_JSWSTART			21
 #define CR2_SWSTART				22
 #define CR2_TSVREFE				23
+
+/*	SQR1 register	*/
+#define SQR1_L_0				20
+
+/*	JSQR register	*/
+#define JSQR_JL_0				20
 
 
 #endif /* ADC_PRIVATE_H_ */
