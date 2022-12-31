@@ -10,9 +10,6 @@
 #include "Bit_Math.h"
 #include "Error_Handler_interface.h"
 
-/*	MCAL	*/
-
-
 /*	SELF	*/
 #include "ADC_private.h"
 #include "ADC_interface.h"
@@ -185,6 +182,14 @@ inline void ADC_voidDisableInterrupt(ADC_UnitNumber_t un, ADC_Interrupt_t i)
 	CLR_BIT(ADC[un]->CR1, CR1_EOCIE + i);
 }
 
+static void (*ADC_fPtrCallback)(void);
+
+/*	sets callback function	*/
+void ADC_voidSetInterruptCallback(void (*callback)(void))
+{
+	ADC_fPtrCallback = callback;
+}
+
 /******************************************************************************
  * Mode control:
  ******************************************************************************/
@@ -313,7 +318,7 @@ inline void ADC_voidDisableDualMode(void)
  */
 inline void ADC_voidEnableContinuousConversionMode(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_CONT);
+	SET_BIT(ADC[un]->CR2, CR2_CONT);
 }
 
 /*
@@ -324,7 +329,7 @@ inline void ADC_voidEnableContinuousConversionMode(ADC_UnitNumber_t un)
  */
 inline void ADC_voidEnableSingleConversionMode(ADC_UnitNumber_t un)
 {
-	CLR_BIT(ADC[un]->CR1, CR2_CONT);
+	CLR_BIT(ADC[un]->CR2, CR2_CONT);
 }
 
 /******************************************************************************
@@ -335,13 +340,13 @@ inline void ADC_voidEnableSingleConversionMode(ADC_UnitNumber_t un)
 /*	enable DMA	*/
 inline void ADC_voidEnableDMA(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_DMA);
+	SET_BIT(ADC[un]->CR2, CR2_DMA);
 }
 
 /*	disable DMA	*/
 inline void ADC_voidDisableDMA(ADC_UnitNumber_t un)
 {
-	CLR_BIT(ADC[un]->CR1, CR2_DMA);
+	CLR_BIT(ADC[un]->CR2, CR2_DMA);
 }
 
 /******************************************************************************
@@ -351,7 +356,7 @@ inline void ADC_voidDisableDMA(ADC_UnitNumber_t un)
 inline void ADC_voidSetDataAlignment(
 	ADC_UnitNumber_t un, ADC_DataAlignment_t alignment)
 {
-	WRT_BIT(ADC[un]->CR1, CR2_ALIGN, alignment);
+	WRT_BIT(ADC[un]->CR2, CR2_ALIGN, alignment);
 }
 
 /******************************************************************************
@@ -367,13 +372,13 @@ inline void ADC_voidSetExternalEventInjected(
 /*	enables external event triggering on injected channels	*/
 inline void ADC_voidEnableExternalTriggerInjected(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_JEXTTRIG);
+	SET_BIT(ADC[un]->CR2, CR2_JEXTTRIG);
 }
 
 /*	disables external event triggering on injected channels	*/
 inline void ADC_voidDisableExternalTriggerInjected(ADC_UnitNumber_t un)
 {
-	CLR_BIT(ADC[un]->CR1, CR2_JEXTTRIG);
+	CLR_BIT(ADC[un]->CR2, CR2_JEXTTRIG);
 }
 
 /*	sets external event source for regular group	*/
@@ -386,13 +391,13 @@ inline void ADC_voidSetExternalEventRegular(
 /*	enables external event triggering on regular channels	*/
 inline void ADC_voidEnableExternalTriggerRegular(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_EXTTRIG);
+	SET_BIT(ADC[un]->CR2, CR2_EXTTRIG);
 }
 
 /*	disables external event triggering on regular channels	*/
 inline void ADC_voidDisableExternalTriggerRegular(ADC_UnitNumber_t un)
 {
-	CLR_BIT(ADC[un]->CR1, CR2_EXTTRIG);
+	CLR_BIT(ADC[un]->CR2, CR2_EXTTRIG);
 }
 
 /*
@@ -403,7 +408,7 @@ inline void ADC_voidDisableExternalTriggerRegular(ADC_UnitNumber_t un)
  */
 inline void ADC_voidStartSWConversionInjected(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_JSWSTART);
+	SET_BIT(ADC[un]->CR2, CR2_JSWSTART);
 }
 
 /*
@@ -414,7 +419,7 @@ inline void ADC_voidStartSWConversionInjected(ADC_UnitNumber_t un)
  */
 inline void ADC_voidStartSWConversionRegular(ADC_UnitNumber_t un)
 {
-	SET_BIT(ADC[un]->CR1, CR2_SWSTART);
+	SET_BIT(ADC[un]->CR2, CR2_SWSTART);
 }
 
 /******************************************************************************
@@ -424,13 +429,13 @@ inline void ADC_voidStartSWConversionRegular(ADC_UnitNumber_t un)
 /*	enable temperature sensor	*/
 inline void ADC_voidEnableTemperatureSensor(void)
 {
-	SET_BIT(ADC[ADC_UnitNumber_1]->CR1, CR2_TSVREFE);
+	SET_BIT(ADC[ADC_UnitNumber_1]->CR2, CR2_TSVREFE);
 }
 
 /*	disable temperature sensor	*/
 inline void ADC_voidDisableTemperatureSensor(void)
 {
-	CLR_BIT(ADC[ADC_UnitNumber_1]->CR1, CR2_TSVREFE);
+	CLR_BIT(ADC[ADC_UnitNumber_1]->CR2, CR2_TSVREFE);
 }
 
 /******************************************************************************
@@ -455,7 +460,8 @@ void ADC_voidSetSampleTime(
  ******************************************************************************/
 /*
  * sets offset to be subtracted from the converted value before storing the
- * result in ADC_JDRx.
+ * result in ADC_JDRx. Thus injected group conversions could result in negative
+ * value.
  *
  * 'offset' is unsigned 12-bit max.
  */
@@ -541,11 +547,14 @@ void ADC_voidSetSequenceLenInjected(ADC_UnitNumber_t un, u8 len)
 /******************************************************************************
  * Data reading:
  ******************************************************************************/
-/*	reads data of injected conversions	*/
-inline u16 ADC_u16GetDataInjected(
-	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN)
+/*
+ * reads data of injected conversions.
+ * Note: result may be negative due to subtraction of pre-defined offset value.
+ */
+inline s16 ADC_s16GetDataInjected(
+	ADC_UnitNumber_t un, ADC_InjectedDataRegister_t regI)
 {
-	return (u16)(ADC[un]->JDR[seqN]);
+	return (u16)(ADC[un]->JDR[regI]);
 }
 
 /*	reads data of regular conversions	*/

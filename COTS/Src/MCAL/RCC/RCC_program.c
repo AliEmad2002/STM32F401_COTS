@@ -167,9 +167,15 @@ void RCC_voidAPB2ClockInit(RCC_APB_Prescaler_t prescaler)
 
 #if TARGET_ID == STM32F10x
 /*	sets ADC prescaler	*/
-void RCC_voidSetAdcPrescaler(RCC_APB_Prescaler_t prescaler)
+void RCC_voidSetAdcPrescaler(RCC_ADC_Prescaler_t prescaler)
 {
 	EDT_REG(RCC->CFGR, RCC_ADCPRE_0, prescaler, 2);
+
+	#if DEBUG_ON
+	const u8 pre[] = {2, 4, 6, 8};
+	u32 clk = RCC_u32GetBusClk(RCC_Bus_APB2) / (u32)pre[prescaler];
+	trace_printf("ADC clock = %u\n", clk);
+	#endif
 }
 #endif
 

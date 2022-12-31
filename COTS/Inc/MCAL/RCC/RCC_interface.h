@@ -239,7 +239,7 @@ void RCC_voidAPB2ClockInit(RCC_APB_Prescaler_t	prescaler);
 
 #if TARGET_ID == STM32F10x
 /*	sets ADC prescaler	*/
-void RCC_voidSetAdcPrescaler(RCC_APB_Prescaler_t prescaler);
+void RCC_voidSetAdcPrescaler(RCC_ADC_Prescaler_t prescaler);
 #endif
 
 /*	enables peripheral clock on certain bus	*/

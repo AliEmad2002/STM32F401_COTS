@@ -14,6 +14,13 @@ typedef enum{
 }ADC_UnitNumber_t;
 
 typedef enum{
+	ADC_InjectedDataRegister_1,
+	ADC_InjectedDataRegister_2,
+	ADC_InjectedDataRegister_3,
+	ADC_InjectedDataRegister_4
+}ADC_InjectedDataRegister_t;
+
+typedef enum{
 	ADC_DataAlignment_Right,
 	ADC_DataAlignment_Left
 }ADC_DataAlignment_t;
@@ -225,12 +232,16 @@ void ADC_voidSetAWDLowThreshold(ADC_UnitNumber_t un, u16 threshold);
 
 /******************************************************************************
  * Interrupts:
+ * NOTE: ADC1 and ADC2 share only one single vector.
  ******************************************************************************/
 /*	enables interrupt 'i' in ADC unit 'un'	*/
 void ADC_voidEnableInterrupt(ADC_UnitNumber_t un, ADC_Interrupt_t i);
 
 /*	disables interrupt 'i' in ADC unit 'un'	*/
 void ADC_voidDisableInterrupt(ADC_UnitNumber_t un, ADC_Interrupt_t i);
+
+/*	sets callback function	*/
+void ADC_voidSetInterruptCallback(void (*callback)(void));
 
 /******************************************************************************
  * Mode control:
@@ -415,7 +426,8 @@ void ADC_voidSetSampleTime(
  ******************************************************************************/
 /*
  * sets offset to be subtracted from the converted value before storing the
- * result in ADC_JDRx.
+ * result in ADC_JDRx. Thus injected group conversions could result in negative
+ * value.
  *
  * 'offset' is unsigned 12-bit max.
  */
@@ -458,9 +470,12 @@ void ADC_voidSetSequenceLenInjected(ADC_UnitNumber_t un, u8 len);
 /******************************************************************************
  * Data reading:
  ******************************************************************************/
-/*	reads data of injected conversions	*/
-u16 ADC_u16GetDataInjected(
-	ADC_UnitNumber_t un, ADC_InjectedSequenceNumber_t seqN);
+/*
+ * reads data of injected conversions.
+ * Note: result may be negative due to subtraction of pre-defined offset value.
+ */
+s16 ADC_s16GetDataInjected(
+	ADC_UnitNumber_t un, ADC_InjectedDataRegister_t seqN);
 
 /*	reads data of regular conversions	*/
 u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un);
