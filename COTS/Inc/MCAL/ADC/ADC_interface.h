@@ -406,13 +406,29 @@ void ADC_voidStartSWConversionRegular(ADC_UnitNumber_t un);
 
 /******************************************************************************
  * Temperature sensor:
- * Note: temperature sensor is only available in ADC1.
+ * Notes:
+ * - temperature sensor is only available in ADC1 and internally connected to
+ * channel-16.
+ * - it's recommended to use sampling time near 17.1us
+ * - it takes about 4-10 microseconds for the internal temperature sensor to be
+ * usable after enabling it.
  ******************************************************************************/
 /*	enable temperature sensor	*/
 void ADC_voidEnableTemperatureSensor(void);
 
 /*	disable temperature sensor	*/
 void ADC_voidDisableTemperatureSensor(void);
+
+/*
+ * get temperature sensor's reading.
+ * 'vSense' is the 12-bit ADC converted value of the sensor's internally
+ * connected channel.
+ *
+ * 's8' return function is lighter if there is not an FPU, but less precise.
+ */
+s8 ADC_s8GetTemperatureSensorReading(u16 vSense);
+
+f32 ADC_f32GetTemperatureSensorReading(u16 vSense);
 
 /******************************************************************************
  * Sample time selection:

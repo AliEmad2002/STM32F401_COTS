@@ -13,6 +13,7 @@
 /*	SELF	*/
 #include "ADC_private.h"
 #include "ADC_interface.h"
+#include "ADC_config.h"
 
 /******************************************************************************
  * ADC unit power control:
@@ -424,8 +425,16 @@ inline void ADC_voidStartSWConversionRegular(ADC_UnitNumber_t un)
 
 /******************************************************************************
  * Temperature sensor:
- * Note: temperature sensor is only available in ADC1.
+ * Notes:
+ * - temperature sensor is only available in ADC1 and internally connected to
+ * channel-16.
+ * - it's recommended to use sampling time near 17.1us
+ * - it takes about 4-10 microseconds for the internal temperature sensor to be
+ * usable after enabling it.
  ******************************************************************************/
+#define V_25		((s16)(ADC_V_25_VOLTS * 4096.0 / ADC_V_REF_VOLTS))
+#define AVG_SLOPE	((f32)(ADC_AVG_SLOPE_VOLTS * 4096.0 / ADC_V_REF_VOLTS))
+
 /*	enable temperature sensor	*/
 inline void ADC_voidEnableTemperatureSensor(void)
 {
@@ -436,6 +445,23 @@ inline void ADC_voidEnableTemperatureSensor(void)
 inline void ADC_voidDisableTemperatureSensor(void)
 {
 	CLR_BIT(ADC[ADC_UnitNumber_1]->CR2, CR2_TSVREFE);
+}
+
+/*
+ * get temperature sensor's reading.
+ * 'vSense' is the 12-bit ADC converted value of the sensor's internally
+ * connected channel.
+ *
+ * 's8' return function is lighter if there is not an FPU, but less precise.
+ */
+inline s8 ADC_s8GetTemperatureSensorReading(u16 vSense)
+{
+	return (s8)((V_25 - (s16)vSense) / ((s16)AVG_SLOPE)) + 25;
+}
+
+f32 ADC_f32GetTemperatureSensorReading(u16 vSense)
+{
+	return ((f32)(V_25 - (s16)vSense)) / AVG_SLOPE + 25.0f;
 }
 
 /******************************************************************************
