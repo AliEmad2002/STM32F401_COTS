@@ -18,8 +18,8 @@
 #include "SCB_interface.h"
 
 /*	SELF	*/
-#include "NVIC_interface.h"
 #include "NVIC_private.h"
+#include "NVIC_interface.h"
 
 
 void NVIC_voidEnableInterrupt(NVIC_Interrupt_t interrupt)

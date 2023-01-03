@@ -256,7 +256,7 @@ u32 RCC_u32GetSysInClk(void)
 }
 
 /*	returns bus clock in Hz	*/
-u32 RCC_u32GetBusClk(RCC_Bus_t bus)
+inline u32 RCC_u32GetBusClk(RCC_Bus_t bus)
 {
 	#if TARGET_ID == STM32F401x
 	u32 ahbClk = RCC_u32GetSysInClk() / RCC_u16GetBusPrescaler(RCC_Bus_AHB1);

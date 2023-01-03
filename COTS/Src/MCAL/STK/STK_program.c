@@ -170,7 +170,7 @@ u32 STK_u32GetElapsedTicks(void)
  * used only when ovfCOunt is enabled, has a maximum counting capability of:
  * (2^24 - 1) * (2^32 - 1) / F_CLK =~ 92 years. 😅😂 suit your self.
  */
-u64 STK_u64GetElapsedTicks(void)
+inline u64 STK_u64GetElapsedTicks(void)
 {
 	return ((ovfCount << 24) - ((u64)(STK->VAL)));
 }

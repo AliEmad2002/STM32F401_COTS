@@ -73,6 +73,17 @@ void GPIO_voidSetPinInputPullUp(GPIO_PortName_t port, u8 pin)
 	#endif
 }
 
+void GPIO_voidSetPinInputPullDown(GPIO_PortName_t port, u8 pin)
+{
+	#if TARGET_ID == STM32F401x
+	GPIO_voidSetPinMode(port, pin, GPIO_Mode_input);
+	GPIO_voidSetPinPull(port, pin, GPIO_Pull_down);
+	#elif TARGET_ID == STM32F10x
+	GPIO_voidSetPinMode(port, pin, GPIO_Mode_Input_Pull);
+	GPIO_voidSetPinOutputLevel(port, pin, GPIO_OutputLevel_Low);
+	#endif
+}
+
 #if TARGET_ID == STM32F401x
 /*	setting pin output type	*/
 void GPIO_voidSetPinOutputType(GPIO_PortName_t port, u8 pin, GPIO_OutputType_t outputType)

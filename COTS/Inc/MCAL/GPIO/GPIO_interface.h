@@ -167,6 +167,8 @@ void GPIO_voidSetPinGpoOpenDrain(GPIO_PortName_t port, u8 pin);
 
 void GPIO_voidSetPinInputPullUp(GPIO_PortName_t port, u8 pin);
 
+void GPIO_voidSetPinInputPullDown(GPIO_PortName_t port, u8 pin);
+
 #if TARGET_ID == STM32F401x
 /*	setting pin output type	*/
 void GPIO_voidSetPinOutputType(GPIO_PortName_t port, u8 pin, GPIO_OutputType_t outputType);

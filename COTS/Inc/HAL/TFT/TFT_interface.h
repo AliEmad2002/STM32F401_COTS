@@ -55,14 +55,14 @@ void TFT_voidInitBrightnessControl(
 {                                                           \
 	SPI_SET_FRAME_FORMAT_8_BIT((tftPtr)->spiUnit);          \
 	GPIO_SET_PIN_LOW((tftPtr)->A0Port, (tftPtr)->A0Pin);    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, cmd);    		        \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (u8)(cmd)); 	        \
 }
 
 #define TFT_WRITE_DATA(tftPtr, data)					     \
 {                                                            \
 	SPI_SET_FRAME_FORMAT_8_BIT((tftPtr)->spiUnit); 	         \
 	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, data); 			         \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (u8)(data));	         \
 }                                                            \
 
 /*
@@ -125,7 +125,21 @@ void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr);
  */
 void TFT_voidFill(TFT_t* tftPtr, Color_t color);
 
+/*
+ * inits vertical scroll mode.
+ * Note:
+ * sum of 'topFixedAreaLen' + 'scrollAreaLen' + 'bottomFixedAreaLen' must be
+ * equal to 162. otherwise, mode may not work properly.
+ */
+void TFT_voidInitScroll(
+	TFT_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
+	u8 bottomFixedAreaLen);
 
-
+/*
+ * scrolls the screen.
+ * 'startingLine' is the index of the line to start the scrolling area with. it
+ * is absolute index (as in frame memory).
+ */
+void TFT_voidScroll(TFT_t* tftPtr, u8 startingLine);
 
 #endif /* _TFT_TFT_INTERFACE_H_ */

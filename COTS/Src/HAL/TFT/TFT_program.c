@@ -238,9 +238,41 @@ void TFT_voidDrawFrame(TFT_t* tftPtr, Frame_t* framePtr)
 	}
 }
 
+/*
+ * inits vertical scroll mode.
+ * Note:
+ * sum of 'topFixedAreaLen' + 'scrollAreaLen' + 'bottomFixedAreaLen' must be
+ * equal to 162. otherwise, mode may not work properly.
+ */
+void TFT_voidInitScroll(
+	TFT_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
+	u8 bottomFixedAreaLen)
+{
 
+	TFT_WRITE_CMD(tftPtr, 0x33);
+	TFT_WRITE_DATA(tftPtr, 0);
+	TFT_WRITE_DATA(tftPtr, topFixedAreaLen);
+	TFT_WRITE_DATA(tftPtr, 0);
+	TFT_WRITE_DATA(tftPtr, scrollAreaLen);
+	TFT_WRITE_DATA(tftPtr, 0);
+	TFT_WRITE_DATA(tftPtr, bottomFixedAreaLen);
+}
 
-
+/*
+ * scrolls the screen.
+ * Notes:
+ * - 'startingLine' is the index of the line to start the scrolling area with. it
+ * is absolute index (as in frame memory).
+ * -  'startingLine' maximum value is 160 decimal. other wise non desired image
+ * is shown.
+ *
+ */
+inline void TFT_voidScroll(TFT_t* tftPtr, u8 startingLine)
+{
+	TFT_WRITE_CMD(tftPtr, 0x37);
+	TFT_WRITE_DATA(tftPtr, 0);
+	TFT_WRITE_DATA(tftPtr, startingLine);
+}
 
 
 

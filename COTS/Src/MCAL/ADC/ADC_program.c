@@ -191,6 +191,12 @@ void ADC_voidSetInterruptCallback(void (*callback)(void))
 	ADC_fPtrCallback = callback;
 }
 
+/*	ISR	*/
+void ADC1_2_IRQHandler(void)
+{
+	ADC_fPtrCallback();
+}
+
 /******************************************************************************
  * Mode control:
  ******************************************************************************/
