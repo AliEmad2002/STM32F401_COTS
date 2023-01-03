@@ -76,16 +76,6 @@ typedef struct{
 }Frame_t;
 
 /*
- * contains boundaries of certain area and pixels in it.
- * Dynamic. Hence, must be used carefully.
- */
-typedef struct{
-	Point_t pointTL;	// top-left point
-	Point_t pointBR;	// bottom-right point
-
-}ImgSegment_t;
-
-/*
  * inits frame object.
  */
 void IMG_voidinitFrame(

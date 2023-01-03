@@ -94,15 +94,6 @@ void TFT_voidReset(TFT_t* tftPtr);
 	SPI_TRANSMIT((tftPtr)->spiUnit, (point2).y);     		      \
 }
 
-#define TFT_SET_PIXEL(tftPtr, p, c)                                \
-{                                                                  \
-	TFT_SET_BOUNDARIES((tftPtr), (p), (p));                        \
-	TFT_WRITE_CMD((tftPtr), 0x2C);                                 \
-	SPI_SET_FRAME_FORMAT_16_BIT((tftPtr)->spiUnit);                \
-	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);          \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (c).code565);                  \
-}
-
 /*
  * draws "frame" in the previously set rectangle:
  * {(xStart, yStart), (xEnd, yEnd)}.
