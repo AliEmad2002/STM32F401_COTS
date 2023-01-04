@@ -60,7 +60,7 @@ void DAC_voidSetPins(DAC_t* dacPtr, GPIO_Pin_t _pinArr[])
 }
 
 /*	outputs a value on the DAC object	*/
-void DAC_voidOut(DAC_t* dacPtr, u32 val)
+inline void DAC_voidOut(DAC_t* dacPtr, u32 val)
 {
 	if (dacPtr->connection == DAC_Connection_ShiftRegister)
 	{
