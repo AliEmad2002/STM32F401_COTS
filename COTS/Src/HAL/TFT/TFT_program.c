@@ -267,11 +267,12 @@ void TFT_voidInitScroll(
  * is shown.
  *
  */
-inline void TFT_voidScroll(TFT_t* tftPtr, u8 startingLine)
+inline void TFT_voidScroll(TFT_t* tftPtr, const u8 startingLine)
 {
 	TFT_WRITE_CMD(tftPtr, 0x37);
-	TFT_WRITE_DATA(tftPtr, 0);
-	TFT_WRITE_DATA(tftPtr, startingLine);
+	GPIO_SET_PIN_HIGH(tftPtr->A0Port, tftPtr->A0Pin);
+	SPI_TRANSMIT(tftPtr->spiUnit, 0);
+	SPI_TRANSMIT(tftPtr->spiUnit, startingLine);
 }
 
 

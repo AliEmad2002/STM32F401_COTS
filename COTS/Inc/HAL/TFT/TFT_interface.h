@@ -34,6 +34,9 @@ typedef struct{
 	/*	timer and timer channel connected to brightness control switch	*/
 	u8 bcTimUnitNumber;
 	TIM_Channel_t bcTimChannel;
+
+	/*	current SPI unit's frame format (stored in object for fast access	*/
+	SPI_DataFrameFormat_t spiFrameFormat;
 }TFT_t;
 
 /*
@@ -70,28 +73,41 @@ void TFT_voidInitBrightnessControl(
  */
 void TFT_voidReset(TFT_t* tftPtr);
 
-/*	sets boundaries of the rectangle to work on	*/
-#define TFT_SET_BOUNDARIES(tftPtr, point1, point2)                \
-{                                                                 \
-	/*	won't use "TFT_voidWriteData()", to save GPIO time.	*/    \
-                                                                  \
+/*
+ * sets boundaries of the rectangle to work on.
+ * (won't use "TFT_voidWriteData()", to save GPIO time)
+ */
+#define TFT_SET_X_BOUNDARIES(tftPtr, xStart, xEnd)				  \
+{																  \
 	/*	set x boundaries command	*/                            \
 	TFT_WRITE_CMD((tftPtr), 0x2A);                                \
 	/*	write data mode	*/                                        \
 	SPI_SET_FRAME_FORMAT_16_BIT((tftPtr)->spiUnit);               \
 	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);         \
 	/*	send x boundaries	*/                                    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (point1).x);         		  \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (point2).x);  		          \
-                                                                  \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (xStart));	         		  \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (xEnd));	         		  \
+}
+
+#define TFT_SET_Y_BOUNDARIES(tftPtr, yStart, yEnd)				  \
+{																  \
 	/*	set y boundaries command	*/                            \
 	TFT_WRITE_CMD((tftPtr), 0x2B);                                \
 	/*	write data mode	*/                                        \
 	SPI_SET_FRAME_FORMAT_16_BIT((tftPtr)->spiUnit);               \
 	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);         \
 	/*	send y boundaries	*/                                    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (point1).y);      		      \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (point2).y);     		      \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (yStart));	         		  \
+	SPI_TRANSMIT((tftPtr)->spiUnit, (yEnd));	         		  \
+}
+
+#define TFT_SET_BOUNDARIES(tftPtr, point1, point2)                \
+{                                                                 \
+	/*	set x boundaries	*/		                              \
+	TFT_SET_X_BOUNDARIES((tftPtr), (point1).x, (point2).x)	      \
+																  \
+	/*	set y boundaries	*/		                              \
+	TFT_SET_Y_BOUNDARIES((tftPtr), (point1).y, (point2).y)	      \
 }
 
 #define TFT_SET_PIXEL(tftPtr, p, c)                                \
@@ -149,6 +165,6 @@ void TFT_voidInitScroll(
  * 'startingLine' is the index of the line to start the scrolling area with. it
  * is absolute index (as in frame memory).
  */
-void TFT_voidScroll(TFT_t* tftPtr, u8 startingLine);
+void TFT_voidScroll(TFT_t* tftPtr, const u8 startingLine);
 
 #endif /* _TFT_TFT_INTERFACE_H_ */
