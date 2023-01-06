@@ -233,6 +233,35 @@ void RCC_voidDisablePeripheralClk(RCC_Bus_t bus, u8 peripheral)
 	}
 }
 
+/*	checks if certain peripheral's clock is enabled	*/
+b8 RCC_b8IsPeripheralEnabled(RCC_Bus_t bus, u8 peripheral)
+{
+	b8 state = false;
+	switch(bus)
+	{
+	#if TARGET_ID == STM32F401x
+	case RCC_Bus_AHB1:
+		state = GET_BIT(RCC->AHB1ENR, peripheral);
+		break;
+	case RCC_Bus_AHB2:
+		state = GET_BIT(RCC->AHB2ENR, peripheral);
+		break;
+	#elif TARGET_ID == STM32F10x
+	case RCC_Bus_AHB:
+		state = GET_BIT(RCC->AHBENR, peripheral);
+		break;
+	#endif
+
+	case RCC_Bus_APB1:
+		state = GET_BIT(RCC->APB1ENR, peripheral);
+		break;
+	case RCC_Bus_APB2:
+		state = GET_BIT(RCC->APB2ENR, peripheral);
+		break;
+	}
+	return state;
+}
+
 #if RCC_PLL_EN
 /*	returns PLL clock in Hz	*/
 u32 RCC_u32GetPllClk(void)

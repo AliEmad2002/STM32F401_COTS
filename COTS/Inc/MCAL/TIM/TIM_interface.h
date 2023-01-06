@@ -721,6 +721,12 @@ void TIM_voidDisableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel);
  * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
  * for more information.
  *****************************************************************************/
+/*	returns number(index) of certain timer peripheral on its system bus	*/
+u8 TIM_u8GetPeripheralIndex(u8 unitNumber);
+
+/*	returns system bus connected to certain timer unit	*/
+RCC_Bus_t TIM_EnumGetBus(u8 unitNumber);
+
 /*
  * returns CLK_INT in Hz.
  *

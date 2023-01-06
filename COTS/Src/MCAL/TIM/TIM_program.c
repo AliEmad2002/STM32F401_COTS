@@ -1572,16 +1572,11 @@ void TIM_voidDisableCaptureCompareChannel(u8 unitNumber, TIM_Channel_t channel)
  * Availability depends on that of channels. Refer to "TIM_Interrupt_t" enum
  * for more information.
  *****************************************************************************/
-/*
- * returns CLK_INT in Hz.
- *
- * same for both timer 1 and timer 8.
- */
-u32 TIM_u32GetClockInternalInput(u8 unitNumber)
+/*	returns number(index) of certain timer peripheral on its system bus	*/
+u8 TIM_u8GetPeripheralIndex(u8 unitNumber)
 {
-	RCC_Bus_t bus;
 	if (IS_ON_APB2(unitNumber))
-		bus = RCC_Bus_APB2;
+		return RCC_PERIPHERAL_TIM9 + unitNumber - 9;
 
 	else if (!IS_TIM_UNIT_NUMBER(unitNumber))
 	{
@@ -1590,7 +1585,33 @@ u32 TIM_u32GetClockInternalInput(u8 unitNumber)
 	}
 
 	else
-		bus = RCC_Bus_APB1;
+		return RCC_PERIPHERAL_TIM2 + unitNumber - 2;
+}
+
+/*	returns system bus connected to certain timer unit	*/
+RCC_Bus_t TIM_EnumGetBus(u8 unitNumber)
+{
+	if (IS_ON_APB2(unitNumber))
+		return RCC_Bus_APB2;
+
+	else if (!IS_TIM_UNIT_NUMBER(unitNumber))
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
+	}
+
+	else
+		return RCC_Bus_APB1;
+}
+
+/*
+ * returns CLK_INT in Hz.
+ *
+ * same for both timer 1 and timer 8.
+ */
+u32 TIM_u32GetClockInternalInput(u8 unitNumber)
+{
+	RCC_Bus_t bus = TIM_EnumGetBus(unitNumber);
 
 	u32 abpFreq = RCC_u32GetBusClk(bus);
 

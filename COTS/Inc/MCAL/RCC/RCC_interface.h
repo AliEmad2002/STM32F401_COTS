@@ -248,6 +248,9 @@ void RCC_voidEnablePeripheralClk(RCC_Bus_t bus, u8 peripheral);
 /*	disables peripheral clock on certain bus	*/
 void RCC_voidDisablePeripheralClk(RCC_Bus_t bus, u8 peripheral);
 
+/*	checks if certain peripheral's clock is enabled	*/
+b8 RCC_b8IsPeripheralEnabled(RCC_Bus_t bus, u8 peripheral);
+
 #if RCC_PLL_EN
 /*	returns PLL clock in Hz	*/
 u32 RCC_u32GetPllClk(void);
