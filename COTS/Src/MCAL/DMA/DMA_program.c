@@ -21,27 +21,31 @@ void (*DMA1GlobalInterruptCallbackArr[7])(void) = {NULL};
 void (*DMA2GlobalInterruptCallbackArr[4])(void) = {NULL};
 
 /*	reads certain argumented DMA status	*/
-b8 DMA_b8ReadFlag(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Flag_t flag)
+inline b8 DMA_b8ReadFlag(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const DMA_Flag_t flag)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	return GET_BIT(DMA[unitNumber]->ISR, flag + channelNumber * 4);
 }
 
 /*	clears certain argumented DMA status	*/
-void DMA_voidClearFlag(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Flag_t flag)
+inline void DMA_voidClearFlag(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const DMA_Flag_t flag)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
-	SET_BIT(DMA[unitNumber]->ISR, flag + channelNumber * 4);
+	SET_BIT(DMA[unitNumber]->IFCR, flag + channelNumber * 4);
 }
 
 /*	enables interrupt	*/
@@ -95,27 +99,36 @@ void DMA_voidSetInterruptCallback(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
 }
 
 /*	enables channel	*/
-void DMA_voidEnableChannel(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
+inline void DMA_voidEnableChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	SET_BIT(DMA[unitNumber]->c[channelNumber].CR, DMA_CCR_EN);
 }
 
 /*	disables channel	*/
-void DMA_voidDisableChannel(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
+inline void DMA_voidDisableChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	CLR_BIT(DMA[unitNumber]->c[channelNumber].CR, DMA_CCR_EN);
+}
+
+/*	checks if certain channel is enabled	*/
+inline b8 DMA_b8IsEnabledChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
+{
+	return GET_BIT(DMA[unitNumber]->c[channelNumber].CR, DMA_CCR_EN);
 }
 
 /*	selects data transfer direction	*/
@@ -196,13 +209,14 @@ void DMA_voidEnableMemoryIncrement(DMA_UnitNumber_t unitNumber, DMA_ChannelNumbe
 }
 
 /*	disables memory increment	*/
-void DMA_voidDisableMemoryIncrement(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
+inline void DMA_voidDisableMemoryIncrement(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	CLR_BIT(DMA[unitNumber]->c[channelNumber].CR, DMA_CCR_MINC);
 }
@@ -274,15 +288,24 @@ void DMA_voidDisableMemToMemMode(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_
  * sets number of data transfers to be made by argumented DMA channel.
  * (can only be written when channel is not enabled)
  */
-void DMA_voidSetNumberOfData(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, u16 numberOfData)
+inline void DMA_voidSetNumberOfData(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const u16 numberOfData)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	DMA[unitNumber]->c[channelNumber].NDTR = numberOfData;
+}
+
+/*	gets number of data	*/
+inline u16 DMA_u16GetNumberOfData(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
+{
+	return DMA[unitNumber]->c[channelNumber].NDTR;
 }
 
 /*
@@ -304,13 +327,15 @@ void DMA_voidSetPeripheralAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
  * sets memory address.
  * (can only be written when channel is not enabled)
  */
-void DMA_voidSetMemoryAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, void* pointer)
+inline void DMA_voidSetMemoryAddress(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	void* const pointer)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	DMA[unitNumber]->c[channelNumber].MAR = (u32)pointer;
 }

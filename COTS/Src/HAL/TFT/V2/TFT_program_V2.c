@@ -23,19 +23,6 @@
 #include "TFT_cmd.h"
 #include "TFT_interface_V2.h"
 
-
-#define TFT2_WRITE_CMD(tftPtr, cmd)						    \
-{                                                           \
-	GPIO_SET_PIN_LOW((tftPtr)->A0Port, (tftPtr)->A0Pin);    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (u8)(cmd)); 	        \
-}
-
-#define TFT2_WRITE_DATA(tftPtr, data)					     \
-{                                                            \
-	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);    \
-	SPI_TRANSMIT((tftPtr)->spiUnit, (u8)(data));	         \
-}                                                            \
-
 /*
  * Inits TFT object.
  * This function:
@@ -106,9 +93,11 @@ void TFT2_voidInit(
 	SPI_voidInit(
 		spiUnit, SPI_Directional_Mode_Uni, SPI_DataFrameFormat_8bit,
 		SPI_FrameDirection_MSB_First, SPI_Prescaler_2, SPI_Mode_Master,
-		SPI_ClockPolarity_0Idle, SPI_ClockPhase_CaptureFirst);
+		SPI_ClockPolarity_1Idle, SPI_ClockPhase_CaptureSecond);
 
 	SPI_voidInitPins(spiUnit, spiAFIOMap, false, false, true);
+
+	SPI_voidEnableDMA(spiUnit, SPI_DMA_Request_Tx);
 
 	SPI_ENABLE_PERIPHERAL(spiUnit);
 
@@ -209,9 +198,113 @@ inline u16 TFT2_u16GetBrightness(TFT2_t* tftPtr)
 		tftPtr->bcTimUnitNumber, tftPtr->bcTimChannel);
 }
 
+/*
+ * sends pixel data after boundaries are set.
+ * (uses DMA)
+ * Note:
+ * - 'pixCount' should be equal to the area of the previously set boundaries.
+ */
+void TFT2_voidSendPixels(
+	TFT2_t* const tftPtr, const u16 pixColorArr[], const u16 pixCount)
+{
+	TFT2_WRITE_CMD(tftPtr, TFT_CMD_MEM_WRITE);
 
+	TFT2_ENTER_DATA_MODE(tftPtr);
 
+	/*
+	 * wait for previous operations on DMA channel to be done
+	 * (only if channel was currently enabled)
+	 */
+	TFT2_voidWaitCurrentDataTransfer(tftPtr);
 
+	/*
+	 * since:
+	 * 	- 8-bit DMA size was selected in the "TFT2_voidInit()" function.
+	 * 	- pixel color is of 16-bits.
+	 * Hence:
+	 * 	- number of data of 8-bits each, to be sent to TFT is 2 * pixCount.
+	 */
+	DMA_voidSetNumberOfData(
+		DMA_UnitNumber_1, tftPtr->dmaCh, (const u32)pixCount << 1);
+
+	DMA_voidSetMemoryAddress(
+		DMA_UnitNumber_1, tftPtr->dmaCh, (void*)pixColorArr);
+
+	DMA_voidEnableMemoryIncrement(DMA_UnitNumber_1, tftPtr->dmaCh);
+
+	DMA_voidEnableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
+}
+
+/*
+ * fills area of boundaries that are previously set with one color
+ * (uses DMA)
+ * Notes:
+ * - 'pixCount' should be equal to the area of the previously set boundaries.
+ * - actual sent color value is: (*pixColorPtr) | ((*pixColorPtr) << 8)
+ * this is due to SPI, TFT and DMA constrains. Hence, not all colors may be
+ * used in this function.
+ * - MEM_WRITE command must be sent before this function call.
+ * - Data mode must be entered before this function call.
+ */
+void TFT2_voidFillDMA(
+	TFT2_t* const tftPtr, const u8* pixColorPtr, const u16 pixCount)
+{
+	if (pixCount == 0)
+		return;
+	/*
+	 * wait for previous operations on DMA channel to be done
+	 * (only if channel was currently enabled)
+	 */
+	TFT2_voidWaitCurrentDataTransfer(tftPtr);
+
+	/*
+	 * since:
+	 * 	- 8-bit DMA size was selected in the "TFT2_voidInit()" function.
+	 * 	- pixel color is of 16-bits.
+	 * Hence:
+	 * 	- number of data of 8-bits each, to be sent to TFT is 2 * pixCount.
+	 */
+	DMA_voidSetNumberOfData(
+		DMA_UnitNumber_1, tftPtr->dmaCh, (const u32)pixCount << 1);
+
+	DMA_voidSetMemoryAddress(
+		DMA_UnitNumber_1, tftPtr->dmaCh, (void*)pixColorPtr);
+
+	DMA_voidDisableMemoryIncrement(DMA_UnitNumber_1, tftPtr->dmaCh);
+
+	DMA_voidEnableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
+}
+
+/*	blocks until end of current data block transfer	*/
+inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
+{
+	if (DMA_b8IsEnabledChannel(DMA_UnitNumber_1, tftPtr->dmaCh))
+	{
+		while(
+			!DMA_b8ReadFlag(
+				DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete));
+		DMA_voidClearFlag(
+			DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete);
+		DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
+	}
+}
+
+/*
+ * scrolls the screen.
+ * Notes:
+ * - 'startingLine' is the index of the line to start the scrolling area with. it
+ * is absolute index (as in frame memory).
+ * -  'startingLine' maximum value is 160 decimal. other wise non desired image
+ * is shown.
+ *
+ */
+inline void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine)
+{
+	TFT2_WRITE_CMD(tftPtr, TFT_CMD_SCROLL);
+	TFT2_ENTER_DATA_MODE(tftPtr);
+	TFT2_SEND_BYTE(tftPtr, 0);
+	TFT2_SEND_BYTE(tftPtr, startingLine);
+}
 
 
 

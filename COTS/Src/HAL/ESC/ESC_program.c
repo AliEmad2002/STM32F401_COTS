@@ -11,6 +11,7 @@
 #include "Error_Handler_interface.h"
 
 /*	MCAL	*/
+#include "RCC_interface.h"
 #include "TIM_interface.h"
 
 /*	SELF	*/

@@ -329,13 +329,15 @@ void SPI_voidTransmitData(SPI_UnitNumber_t unitNumber, u16 data)
 }
 
 /*	enables DMA request	*/
-void SPI_voidEnableDMA(SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request)
+inline void SPI_voidEnableDMA(
+	SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request)
 {
 	SET_BIT(SPI[unitNumber]->CR2, request);
 }
 
 /*	disables DMA request	*/
-void SPI_voidDisableDMA(SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request)
+inline void SPI_voidDisableDMA(
+	SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request)
 {
 	CLR_BIT(SPI[unitNumber]->CR2, request);
 }

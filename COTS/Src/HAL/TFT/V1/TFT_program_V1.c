@@ -14,6 +14,7 @@
 #include "Img_interface.h"
 
 /*	MCAL	*/
+#include "RCC_interface.h"
 #include "GPIO_interface.h"
 #include "TIM_interface.h"
 #include "SPI_interface.h"

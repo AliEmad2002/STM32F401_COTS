@@ -58,10 +58,14 @@ typedef enum{
 #define DMA_NOT_IN_RANGE(uN, cN)	(((uN) == DMA_UnitNumber_2)	&&		((cN) > DMA_ChannelNumber_5))
 
 /*	reads certain argumented DMA status	*/
-b8 DMA_b8ReadFlag(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Flag_t flag);
+b8 DMA_b8ReadFlag(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const DMA_Flag_t flag);
 
 /*	clears certain argumented DMA status	*/
-void DMA_voidClearFlag(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Flag_t flag);
+void DMA_voidClearFlag(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const DMA_Flag_t flag);
 
 /*	enables interrupt	*/
 void DMA_voidEnableInterrupt(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Interrupt_t interrupt);
@@ -73,10 +77,16 @@ void DMA_voidDisableInterrupt(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t c
 void DMA_voidSetInterruptCallback(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, void (*functionPointer)(void));
 
 /*	enables channel	*/
-void DMA_voidEnableChannel(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
+void DMA_voidEnableChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*	disables channel	*/
-void DMA_voidDisableChannel(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
+void DMA_voidDisableChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
+
+/*	checks if certain channel is enabled	*/
+b8 DMA_b8IsEnabledChannel(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*	selects data transfer direction	*/
 void DMA_voidSelectDataTransferDirection(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Direction_t dir);
@@ -102,7 +112,8 @@ void DMA_voidDisablePeripheralIncrement(DMA_UnitNumber_t unitNumber, DMA_Channel
 void DMA_voidEnableMemoryIncrement(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
 
 /*	disables memory increment	*/
-void DMA_voidDisableMemoryIncrement(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
+void DMA_voidDisableMemoryIncrement(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*	selects peripheral size	*/
 void DMA_voidSelectPeripheralSize(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, DMA_Size_t size);
@@ -126,7 +137,13 @@ void DMA_voidDisableMemToMemMode(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_
  * sets number of data transfers to be made by argumented DMA channel.
  * (can only be written when channel is not enabled)
  */
-void DMA_voidSetNumberOfData(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, u16 numberOfData);
+void DMA_voidSetNumberOfData(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	const u16 numberOfData);
+
+/*	gets number of data	*/
+u16 DMA_u16GetNumberOfData(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*
  * sets peripheral address.
@@ -138,6 +155,8 @@ void DMA_voidSetPeripheralAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
  * sets memory address.
  * (can only be written when channel is not enabled)
  */
-void DMA_voidSetMemoryAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, void* pointer);
+void DMA_voidSetMemoryAddress(
+	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
+	void* const pointer);
 
 #endif /* INCLUDE_MCAL_DMA_DMA_INTERFACE_H_ */
