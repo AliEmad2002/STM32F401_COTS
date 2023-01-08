@@ -154,6 +154,17 @@ void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr);
  */
 void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine);
 
+/*	sets TFT's corresponding DMA interrupt callback	*/
+void TFT2_voidSetDMATransferCompleteCallback(
+	TFT2_t* const tftPtr, void (* callback)(void));
 
+/*	enables TFT's corresponding DMA transfer complete interrupt	*/
+void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* const tftPtr);
+
+/*	clears TFT's corresponding DMA transfer complete flag	*/
+void TFT2_voidClearDMATCFlag(TFT2_t* const tftPtr);
+
+/*	disables TFT's corresponding DMA channel	*/
+void TFT2_voidDisableDMAChannel(TFT2_t* const tftPtr);
 
 #endif /* INCLUDE_HAL_TFT_V2_TFT_INTERFACE_H_ */

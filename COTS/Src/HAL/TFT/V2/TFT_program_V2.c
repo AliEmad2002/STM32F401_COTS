@@ -306,13 +306,33 @@ inline void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine)
 	TFT2_SEND_BYTE(tftPtr, startingLine);
 }
 
+/*	sets TFT's corresponding DMA interrupt callback	*/
+inline void TFT2_voidSetDMATransferCompleteCallback(
+	TFT2_t* const tftPtr, void (* callback)(void))
+{
+	DMA_voidSetInterruptCallback(
+		DMA_UnitNumber_1, tftPtr->dmaCh, callback);
+}
 
+/*	enables TFT's corresponding DMA transfer complete interrupt	*/
+inline void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* const tftPtr)
+{
+	DMA_voidEnableInterrupt(
+		DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Interrupt_TransferComplete);
+}
 
+/*	clears TFT's corresponding DMA transfer complete flag	*/
+inline void TFT2_voidClearDMATCFlag(TFT2_t* const tftPtr)
+{
+	DMA_voidClearFlag(
+		DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete);
+}
 
-
-
-
-
+/*	disables TFT's corresponding DMA channel	*/
+inline void TFT2_voidDisableDMAChannel(TFT2_t* const tftPtr)
+{
+	DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
+}
 
 
 
