@@ -23,54 +23,6 @@
 
 
 /******************************************************************************
- * Callback functions.
- * (all of type void (void))
- *
- * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
- * so far it is implemented only for advanced timers.
- *****************************************************************************/
-static void (*advTimCallbacks[2][4])(void);
-
-/*	sets callback of an advanced timer unit	*/
-void TIM_voidSetCallbackADV(
-	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void))
-{
-	switch (unitNumber)
-	{
-	case 1:
-		advTimCallbacks[0][vect] = callback;
-		break;
-
-	case 8:
-		advTimCallbacks[1][vect] = callback;
-		break;
-
-	default:
-		ErrorHandler_voidExecute(0);
-		break;
-	}
-}
-
-/*	IRQ's	*/
-/*	flag clearing is user's responsibility	*/
-void TIM1_BRK_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_BRK]();}
-void TIM8_BRK_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_BRK]();}
-
-void TIM1_UP_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_UP]();}
-void TIM8_UP_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_UP]();}
-
-void TIM1_TRG_COM_IRQHandler(void){
-	advTimCallbacks[0][TIM_ADV_Vector_TRG_COM]();}
-void TIM8_TRG_COM_IRQHandler(void){
-	advTimCallbacks[1][TIM_ADV_Vector_TRG_COM]();}
-
-void TIM1_CC_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_CC]();}
-void TIM8_CC_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_CC]();}
-
-
-
-
-/******************************************************************************
  * Range check macros
  *****************************************************************************/
 /*
@@ -198,6 +150,28 @@ void TIM_voidSetUpdateSource(u8 unitNumber, TIM_UpdateSource_t source)
 }
 
 /******************************************************************************
+ * timer peripheral clock (from RCC).
+ *****************************************************************************/
+/*	enables RCC clock (if not enabled) for certain timer */
+void TIM_voidEnableTimRCC(const u8 unitNumber)
+{
+	if (IS_TIM_UNIT_NUMBER(unitNumber))
+	{
+		/*	enable TIMx clock (if not enabled)	*/
+		RCC_Bus_t bus = TIM_EnumGetBus(unitNumber);
+		u8 peripheralNumber = TIM_u8GetPeripheralIndex(unitNumber);
+		if (!RCC_b8IsPeripheralEnabled(bus, peripheralNumber))
+			RCC_voidEnablePeripheralClk(bus, peripheralNumber);
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+
+}
+
+/******************************************************************************
  * Counting direction.
  *
  * Available only in:
@@ -288,7 +262,7 @@ void TIM_voidSetDeadTimeMultiplier(
 /*
  * selects slave mode (external clock input)
  */
-void TIM_voidSetSlaveMode(u8 unitNumber, TIM_SlaveMode_t mode)
+void TIM_voidSetSlaveMode(const u8 unitNumber, const TIM_SlaveMode_t mode)
 {
 	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
 	{
@@ -544,6 +518,70 @@ void TIM_voidDisableUpdate(u8 unitNumber)
 	}
 }
 
+/******************************************************************************
+ * Callback functions.
+ * (all of type void (void))
+ *
+ * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
+ * so far it is implemented only for advanced timers.
+ *****************************************************************************/
+static void (*advTimCallbacks[2][4])(void);
+static void (*gpCallbacks[4])(void);
+
+/*	sets callback of an advanced timer unit	*/
+void TIM_voidSetCallbackADV(
+	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void))
+{
+	switch (unitNumber)
+	{
+	case 1:
+		advTimCallbacks[0][vect] = callback;
+		break;
+
+	case 8:
+		advTimCallbacks[1][vect] = callback;
+		break;
+
+	default:
+		ErrorHandler_voidExecute(0);
+		break;
+	}
+}
+
+/*	sets callback of a general purpose timer	*/
+void TIM_voidSetCallbackGP(u8 unitNumber, void(*callback)(void))
+{
+	if (IS_GP_2_TO_5(unitNumber))
+	{
+		gpCallbacks[unitNumber - 2] = callback;
+	}
+	else
+	{
+		ErrorHandler_voidExecute(0);
+	}
+}
+
+/*	IRQ's	*/
+/*	flag clearing is user's responsibility	*/
+void TIM1_BRK_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_BRK]();}
+void TIM8_BRK_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_BRK]();}
+
+void TIM1_UP_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_UP]();}
+void TIM8_UP_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_UP]();}
+
+void TIM1_TRG_COM_IRQHandler(void){
+	advTimCallbacks[0][TIM_ADV_Vector_TRG_COM]();}
+void TIM8_TRG_COM_IRQHandler(void){
+	advTimCallbacks[1][TIM_ADV_Vector_TRG_COM]();}
+
+void TIM1_CC_IRQHandler(void){advTimCallbacks[0][TIM_ADV_Vector_CC]();}
+void TIM8_CC_IRQHandler(void){advTimCallbacks[1][TIM_ADV_Vector_CC]();}
+
+void TIM2_IRQHandler(void){gpCallbacks[0]();}
+void TIM3_IRQHandler(void){gpCallbacks[1]();}
+void TIM4_IRQHandler(void){gpCallbacks[2]();}
+void TIM5_IRQHandler(void){gpCallbacks[3]();}
+
 
 /******************************************************************************
  * Interrupts.
@@ -742,17 +780,18 @@ b8 TIM_b8GetStatusFlag(u8 unitNumber, TIM_Status_t status)
 }
 
 /*	clears state of argumented status flag	*/
-void TIM_voidClearStatusFlag(u8 unitNumber, TIM_Status_t status)
+inline void TIM_voidClearStatusFlag(
+	const u8 unitNumber, const TIM_Status_t status)
 {
-	if (TIM_b8IsStatusFlagAvailable(unitNumber, status))
+	//if (TIM_b8IsStatusFlagAvailable(unitNumber, status))
 	{
 		CLR_BIT(TIM[unitNumber]->SR, status);
 	}
 
-	else
+	/*else
 	{
 		ErrorHandler_voidExecute(0);
-	}
+	}*/
 }
 
 
@@ -764,8 +803,8 @@ void TIM_voidClearStatusFlag(u8 unitNumber, TIM_Status_t status)
  *****************************************************************************/
 /*	selects capture/compare	*/
 void TIM_voidSetCaptureCompareSelection(
-	u8 unitNumber, TIM_Channel_t channel,
-	TIM_CaptureCompareSelection_t selection)
+	const u8 unitNumber, const TIM_Channel_t channel,
+	const TIM_CaptureCompareSelection_t selection)
 {
 	if (TIM_b8IsChannelInTimer(unitNumber, channel))
 	{
@@ -919,7 +958,7 @@ void TIM_voidSetPrescalerRegister(u8 unitNumber, u16 value)
  * ARR is the value that the counter counts up to, then generates an OVF,
  * (or counts from it to 0 in case of down counting).
  */
-void TIM_voidSetARR(u8 unitNumber, u16 value)
+inline void TIM_voidSetARR(const u8 unitNumber, const u16 value)
 {
 	if (IS_TIM_UNIT_NUMBER(unitNumber))
 	{
@@ -929,6 +968,21 @@ void TIM_voidSetARR(u8 unitNumber, u16 value)
 	else
 	{
 		ErrorHandler_voidExecute(0);
+	}
+}
+
+/*	gets value of ARR	*/
+inline u16 TIM_u16GetARR(const u8 unitNumber)
+{
+	if (IS_TIM_UNIT_NUMBER(unitNumber))
+	{
+		return TIM[unitNumber]->ARR;
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
 	}
 }
 
@@ -1055,7 +1109,8 @@ void TIM_voidSetMasterModeSelection(u8 unitNumber, TIM_MasterMode_t mode)
  *****************************************************************************/
 /*	selects output compare mode	*/
 void TIM_voidSetOutputCompareMode(
-	u8 unitNumber, TIM_Channel_t channel, TIM_OutputCompareMode_t mode)
+	const u8 unitNumber, const TIM_Channel_t channel,
+	const TIM_OutputCompareMode_t mode)
 {
 	if (TIM_b8IsChannelInTimer(unitNumber, channel))
 	{
@@ -1628,14 +1683,20 @@ u32 TIM_u32GetClockInternalInput(u8 unitNumber)
  * assumes that clock source is internal clock source, as it's the most common
  * when using PWM.
  *
+ * * argument 'freqmHz' is wanted frequency in mHz
+ *
  * returns actual running overflow frequency in milli-Hz.
  */
-u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz)
+u64 TIM_u64SetFreqByChangingPrescaler(const u8 unitNumber, const u64 freqmHz)
 {
-	u32 clkInt = TIM_u32GetClockInternalInput(unitNumber);
+	/*	internal clock in mHz	*/
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
 
-	/*	Frequency = clk_int / (2^16 * prescaler)	*/
-	u32 prescaler = clkInt / ((u32)freqHz << 16);
+	/*
+	 * since: Frequency = clk_int / (ARR * prescaler)
+	 */
+	u16 arr = TIM[unitNumber]->ARR;
+	u32 prescaler = clkIntmHz  / freqmHz / arr;
 
 	if (prescaler == 0  ||  prescaler > 65535)
 	{
@@ -1646,25 +1707,62 @@ u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz)
 	else
 	{
 		TIM[unitNumber]->PSC = prescaler;
-		return ((u64)clkInt*1000) / (u64)(prescaler << 16);
+		return clkIntmHz / prescaler / arr;
+	}
+}
+
+/*
+ * sets frequency by changing ARR value.
+ *
+ * Assumes that clock source is internal clock source, as it's the most common
+ * when using PWM.
+ *
+ * argument 'freqmHz' is wanted frequency in mHz
+ *
+ * returns actual running overflow frequency in milli-Hz.
+ */
+u64 TIM_u64SetFreqByChangingArr(const u8 unitNumber, const u64 freqmHz)
+{
+	/*	internal clock in mHz	*/
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+
+	/*
+	 * since: Frequency = clk_int / (ARR * prescaler)
+	 */
+	u16 prescaler = TIM[unitNumber]->PSC;
+	u32 arr = clkIntmHz / freqmHz / prescaler;
+
+	if (arr == 0  ||  arr > 65535)
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
+	}
+
+	else
+	{
+		TIM[unitNumber]->ARR = arr;
+		return clkIntmHz / prescaler / arr;
 	}
 }
 
 /*
  * inits channel as PWM output, configures and connects channel's non inverting
  * GPIO pin.
+ *
+ * argument 'freqmHz' is wanted frequency in mHz
+ *
  * returns actual running overflow frequency in milli-Hz.
  */
 u64 TIM_u64InitPWM(
-	u8 unitNumber, TIM_Channel_t ch, TIM_OutputCompareMode_t pwmMode,
-	u16 freqHz)
+	const u8 unitNumber, const TIM_Channel_t ch,
+	const TIM_OutputCompareMode_t pwmMode, const u64 freqmHz)
 {
 	/*	use internal clock	*/
 	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
 		TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Disabled);
 
 	/*	set frequency (prescaler)	*/
-	u64 mHzFreq = TIM_u64SetFreq(unitNumber, freqHz);
+	u64 mHzFreq = TIM_u64SetFreqByChangingPrescaler(unitNumber, freqmHz);
 
 	/*	select up-counting mode	*/
 	if (IS_ADV_GP_2_TO_5(unitNumber))
@@ -1754,20 +1852,80 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 /*
  * sets duty cycle of PWM signal.
  *
+ * 'duty' is a number from 0 to 2^16 - 1.
+ * setting it 0 would result zero active duty cycle,
+ * and setting it to max value (2^16 - 1) would result 100% active duty cycle.
+ *
  * if channel was configured on PWM1 mode, "duty" will be the active duty, and
  * vice-versa.
  *
  * skips range checking to reduce overhead, as it's used in a high rate. Hence,
  * user must be careful when to use it.
  */
-void TIM_voidSetDutyCycle(u8 unitNumber, TIM_Channel_t ch, u16 duty)
+inline void TIM_voidSetDutyCycle(
+	const u8 unitNumber, TIM_Channel_t ch, const u16 duty)
 {
 	if (ch > TIM_Channel_2)
 		ch -= 2;
 
-	(&(TIM[unitNumber]->CCR1))[ch] = duty;
+	(&(TIM[unitNumber]->CCR1))[ch] = duty * (u32)(TIM[unitNumber]->ARR) / 65535;
 }
 
+/*
+ * inits and uses timer unit to trigger a user-defined function at a
+ * user-defined changeable rate.
+ *
+ * Note:
+ * - 'rateInitial', 'rateMax' and returning 'rateMin' are all in mHz
+ */
+u64 TIM_u64InitTimTrigger(
+	const u8 unitNumber, const u64 rateInitial, const u64 rateMax,
+	void (*trigFuncPtr)(void))
+{
+	/*	enables timer peripheral's clock (if not enable)	*/
+	TIM_voidEnableTimRCC(unitNumber);
+
+	/*	select internal clock as clock source	*/
+	TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Disabled);
+
+	/*	counting direction down	*/
+	TIM_voidSetCounterDirection(unitNumber, TIM_CountDirection_Down);
+
+	/*	set counter prescaler so that rateMax is achievable at ARR = 1	*/
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+	u32 pre = clkIntmHz / rateMax - 1;
+	if (pre > (1 << 16))
+	{
+		ErrorHandler_voidExecute(0);
+	}
+	TIM[unitNumber]->PSC = pre;
+
+	u64 rateMin = clkIntmHz / pre / (1 << 16);
+
+	/*
+	 * enable ARR preload (so that sudden user change does not make problem in
+	 * current cycle.
+	 */
+	/*
+	 * removed as ADV timer is not uesd and this is an  ADV timer only function
+	 */
+	//TIM_voidEnableAutoReloadPreload(timUnit);
+
+	/*	set ARR with a value that gives a rate of 'rateInitial'	*/
+	TIM_voidSetARR(unitNumber, clkIntmHz / rateInitial / pre);
+
+	/*	set callback	*/
+	TIM_voidSetCallbackGP(unitNumber, trigFuncPtr);
+
+	/*	enable update event (UNF) interrupt	*/
+	TIM_voidEnableInterrupt(unitNumber, TIM_Interrupt_Update);
+
+	/*	start counter	*/
+	TIM_voidEnableCounter(unitNumber);
+
+
+	return rateMin;
+}
 
 /******************************************************************************
  * Advanced 32-bit tick-counter.

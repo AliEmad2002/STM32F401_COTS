@@ -11,24 +11,6 @@
 #include "TIM_private.h"
 
 /******************************************************************************
- * Callback functions.
- * (all of type void (void))
- *
- * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
- * so far it is implemented only for advanced timers.
- *****************************************************************************/
-typedef enum{
-	TIM_ADV_Vector_BRK,
-	TIM_ADV_Vector_UP,
-	TIM_ADV_Vector_TRG_COM,
-	TIM_ADV_Vector_CC
-}TIM_ADV_Vector_t;
-
-/*	sets callback of an advanced timer unit	*/
-void TIM_voidSetCallbackADV(
-	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void));
-
-/******************************************************************************
  * Enums of timers and channels.
  *****************************************************************************/
 typedef enum{
@@ -86,6 +68,11 @@ typedef enum{
  */
 void TIM_voidSetUpdateSource(u8 unitNumber, TIM_UpdateSource_t source);
 
+/******************************************************************************
+ * timer peripheral clock (from RCC).
+ *****************************************************************************/
+/*	enables RCC clock (if not enabled) for certain timer */
+void TIM_voidEnableTimRCC(const u8 unitNumber);
 
 /******************************************************************************
  * Counting direction.
@@ -198,7 +185,7 @@ typedef enum{
 /*
  * selects slave mode (external clock input)
  */
-void TIM_voidSetSlaveMode(u8 unitNumber, TIM_SlaveMode_t mode);
+void TIM_voidSetSlaveMode(const u8 unitNumber, const TIM_SlaveMode_t mode);
 
 /******************************************************************************
  * Trigger source.
@@ -360,6 +347,26 @@ void TIM_voidEnableUpdate(u8 unitNumber);
 /*	disable update event generation	*/
 void TIM_voidDisableUpdate(u8 unitNumber);
 
+/******************************************************************************
+ * Callback functions.
+ * (all of type void (void))
+ *
+ * N O T E : ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
+ * so far it is implemented only for advanced timers.
+ *****************************************************************************/
+typedef enum{
+	TIM_ADV_Vector_BRK,
+	TIM_ADV_Vector_UP,
+	TIM_ADV_Vector_TRG_COM,
+	TIM_ADV_Vector_CC
+}TIM_ADV_Vector_t;
+
+/*	sets callback of an advanced timer unit	*/
+void TIM_voidSetCallbackADV(
+	u8 unitNumber, TIM_ADV_Vector_t vect, void(*callback)(void));
+
+/*	sets callback of a general purpose timer	*/
+void TIM_voidSetCallbackGP(u8 unitNumber, void(*callback)(void));
 
 /******************************************************************************
  * Interrupts.
@@ -395,10 +402,6 @@ void TIM_voidEnableInterrupt(u8 unitNumber, TIM_Interrupt_t interrupt);
 
 /*	disables interrupt	*/
 void TIM_voidDisableInterrupt(u8 unitNumber, TIM_Interrupt_t interrupt);
-
-/*	sets interrupt callback function	*/
-void TIM_voidSetInterruptCallback(
-	u8 unitNumber, TIM_Interrupt_t interrupt, void (*callback)(void));
 
 /*	generates interrupt event by SW	*/
 void TIM_voidGenerateSoftwareInterruptEvent(
@@ -477,7 +480,8 @@ typedef enum{
 b8 TIM_b8GetStatusFlag(u8 unitNumber, TIM_Status_t status);
 
 /*	clears state of argumented status flag	*/
-void TIM_voidClearStatusFlag(u8 unitNumber, TIM_Status_t status);
+void TIM_voidClearStatusFlag(
+	const u8 unitNumber, const TIM_Status_t status);
 
 
 /******************************************************************************
@@ -496,8 +500,8 @@ typedef enum{
 
 /*	selects capture/compare	*/
 void TIM_voidSetCaptureCompareSelection(
-	u8 unitNumber, TIM_Channel_t channel,
-	TIM_CaptureCompareSelection_t selection);
+	const u8 unitNumber, const TIM_Channel_t channel,
+	const TIM_CaptureCompareSelection_t selection);
 
 
 /******************************************************************************
@@ -570,7 +574,10 @@ void TIM_voidSetPrescalerRegister(u8 unitNumber, u16 value);
  * ARR is the value that the counter counts up to, then generates an OVF,
  * (or counts from it to 0 in case of down counting).
  */
-void TIM_voidSetARR(u8 unitNumber, u16 value);
+void TIM_voidSetARR(const u8 unitNumber, const u16 value);
+
+/*	gets value of ARR	*/
+u16 TIM_u16GetARR(const u8 unitNumber);
 
 /*	writes repetition counter	*/
 void TIM_voidSetRepetitionCounter(u8 unitNumber, u8 value);
@@ -638,7 +645,8 @@ typedef enum{
 
 /*	selects output compare mode	*/
 void TIM_voidSetOutputCompareMode(
-	u8 unitNumber, TIM_Channel_t channel, TIM_OutputCompareMode_t mode);
+	const u8 unitNumber, const TIM_Channel_t channel,
+	const TIM_OutputCompareMode_t mode);
 
 /*	enable output compare fast	*/
 void TIM_voidEnableOutputCompareFast(u8 unitNumber, TIM_Channel_t channel);
@@ -741,18 +749,35 @@ u32 TIM_u32GetClockInternalInput(u8 unitNumber);
  * assumes that clock source is internal clock source, as it's the most common
  * when using PWM.
  *
+ * * argument 'freqmHz' is wanted frequency in mHz
+ *
  * returns actual running overflow frequency in milli-Hz.
  */
-u64 TIM_u64SetFreq(u8 unitNumber, u16 freqHz);
+u64 TIM_u64SetFreqByChangingPrescaler(const u8 unitNumber, const u64 freqmHz);
+
+/*
+ * sets frequency by changing ARR value.
+ *
+ * Assumes that clock source is internal clock source, as it's the most common
+ * when using PWM.
+ *
+ * argument 'freqmHz' is wanted frequency in mHz
+ *
+ * returns actual running overflow frequency in milli-Hz.
+ */
+u64 TIM_u64SetFreqByChangingArr(const u8 unitNumber, const u64 freqmHz);
 
 /*
  * inits channel as PWM output, configures and connects channel's non inverting
  * GPIO pin.
+ *
+ * argument 'freqmHz' is wanted frequency in mHz
+ *
  * returns actual running overflow frequency in milli-Hz.
  */
 u64 TIM_u64InitPWM(
-	u8 unitNumber, TIM_Channel_t ch, TIM_OutputCompareMode_t pwmMode,
-	u16 freqHz);
+	const u8 unitNumber, const TIM_Channel_t ch,
+	const TIM_OutputCompareMode_t pwmMode, const u64 freqmHz);
 
 /*
  * configures and connects channel's non inverting GPIO pin.
@@ -766,13 +791,29 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map);
 /*
  * sets duty cycle of PWM signal.
  *
+ * 'duty' is a number from 0 to 2^16 - 1.
+ * setting it 0 would result zero active duty cycle,
+ * and setting it to max value (2^16 - 1) would result 100% active duty cycle.
+ *
  * if channel was configured on PWM1 mode, "duty" will be the active duty, and
  * vice-versa.
  *
  * skips range checking to reduce overhead, as it's used in a high rate. Hence,
  * user must be careful when to use it.
  */
-void TIM_voidSetDutyCycle(u8 unitNumber, TIM_Channel_t ch, u16 duty);
+void TIM_voidSetDutyCycle(
+	const u8 unitNumber, TIM_Channel_t ch, const u16 duty);
+
+/*
+ * inits and uses timer unit to trigger a user-defined function at a
+ * user-defined changeable rate.
+ *
+ * Note:
+ * - 'rateInitial', 'rateMax' and returning 'rateMin' are all in mHz
+ */
+u64 TIM_u64InitTimTrigger(
+	const u8 timUnit, const u64 rateInitial, const u64 rateMax,
+	void (*trigFuncPtr)(void));
 
 
 /******************************************************************************

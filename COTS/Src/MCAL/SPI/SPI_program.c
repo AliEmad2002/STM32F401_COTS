@@ -23,7 +23,6 @@
 #include "SPI_private.h"
 #include "SPI_interface.h"
 
-
 /*
  * inits a SPI peripheral.
  * output is disabled by default, use "SPI_voidEnableOutput()" to enable it.

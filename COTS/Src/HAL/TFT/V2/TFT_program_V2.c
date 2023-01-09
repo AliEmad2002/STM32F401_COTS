@@ -102,8 +102,7 @@ void TFT2_voidInit(
 	SPI_ENABLE_PERIPHERAL(spiUnit);
 
 	/*	enable DMA1 clock (if not enabled)	*/
-	if (!RCC_b8IsPeripheralEnabled(RCC_Bus_AHB, RCC_PERIPHERAL_DMA1))
-		RCC_voidEnablePeripheralClk(RCC_Bus_AHB, RCC_PERIPHERAL_DMA1);
+	DMA_voidEnableRCCClock(DMA_UnitNumber_1);
 
 	/*	init DMA	*/
 	DMA_voidSelectPeripheralSize(
@@ -122,10 +121,7 @@ void TFT2_voidInit(
 	tftPtr->bcTimChannel = bcTimChannel;
 
 	/*	enable TIMx clock (if not enabled)	*/
-	bus = TIM_EnumGetBus(bcTimUnitNumber);
-	peripheralNumber = TIM_u8GetPeripheralIndex(bcTimUnitNumber);
-	if (!RCC_b8IsPeripheralEnabled(bus, peripheralNumber))
-		RCC_voidEnablePeripheralClk(bus, peripheralNumber);
+	TIM_voidEnableTimRCC(bcTimUnitNumber);
 
 	/*	init TIMx	*/
 	/*
@@ -333,6 +329,20 @@ inline void TFT2_voidDisableDMAChannel(TFT2_t* const tftPtr)
 {
 	DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

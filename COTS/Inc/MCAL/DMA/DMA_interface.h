@@ -57,6 +57,9 @@ typedef enum{
 /*	range check	*/
 #define DMA_NOT_IN_RANGE(uN, cN)	(((uN) == DMA_UnitNumber_2)	&&		((cN) > DMA_ChannelNumber_5))
 
+/*	enables DMA1 clock (if not enabled)	*/
+void DMA_voidEnableRCCClock(const DMA_UnitNumber_t unitNumber);
+
 /*	reads certain argumented DMA status	*/
 b8 DMA_b8ReadFlag(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,

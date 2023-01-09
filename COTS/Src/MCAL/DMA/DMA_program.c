@@ -12,6 +12,9 @@
 #include "Bit_Math.h"
 #include "Error_Handler_interface.h"
 
+/*	MCAL	*/
+#include "RCC_interface.h"
+
 /*	SELF	*/
 #include "DMA_interface.h"
 #include "DMA_private.h"
@@ -19,6 +22,14 @@
 void (*DMA1GlobalInterruptCallbackArr[7])(void) = {NULL};
 
 void (*DMA2GlobalInterruptCallbackArr[4])(void) = {NULL};
+
+/*	enables DMA1 clock (if not enabled)	*/
+void DMA_voidEnableRCCClock(const DMA_UnitNumber_t unitNumber)
+{
+	if (!RCC_b8IsPeripheralEnabled(RCC_Bus_AHB, unitNumber))
+		RCC_voidEnablePeripheralClk(RCC_Bus_AHB, unitNumber);
+}
+
 
 /*	reads certain argumented DMA status	*/
 inline b8 DMA_b8ReadFlag(
