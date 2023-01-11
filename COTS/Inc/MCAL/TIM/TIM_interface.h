@@ -492,9 +492,9 @@ void TIM_voidClearStatusFlag(
  *****************************************************************************/
 typedef enum{
 	TIM_CaptureCompareSelection_Output,
-	TIM_CaptureCompareSelection_Input_TI_NPlus1,	//	'N' is the channel num.
-	TIM_CaptureCompareSelection_Input_TI_N,
-	TIM_CaptureCompareSelection_Input_TRC,	// works only if an internal trigger
+	TIM_CaptureCompareSelection_Input_0,	//	'N' is the channel num.
+	TIM_CaptureCompareSelection_Input_1,
+	TIM_CaptureCompareSelection_Input_2,	// works only if an internal trigger
 											// input is selected first.
 }TIM_CaptureCompareSelection_t;
 
@@ -815,6 +815,61 @@ u64 TIM_u64InitTimTrigger(
 	const u8 timUnit, const u64 rateInitial, const u64 rateMax,
 	void (*trigFuncPtr)(void));
 
+/******************************************************************************
+ * Signal measurement.
+ *****************************************************************************/
+/*
+ * This function inits frequency and duty cycle measurement on timer
+ * 'unitNumber' using channel_1.
+ * (user is forced to use channel_1 as it is the only one that has edge
+ * triggering capability of the timer/counter unit.
+ *
+ * This function in detail:
+ * - Enables RCC clock (if not enabled) for the timer unit 'unitNumber'.
+ * - Configures timer channel_1 as pulled down input on the GPIO map
+ * 'gpioMap'.
+ * - Does timer peripheral needed configurations:
+ * 		- clock source is internal clock.
+ * 		- auto reload register is zero.
+ * 		- prescaler is the value at which a signal of 'freqMin' would take
+ * 		2^16 - 1 counter ticks.
+ * 		- counting direction is up-counting.
+ * 		- trigger source is 'TI1FP1' (channel_1 edge detector output).
+ * 		- trigger polarity is active high / rising edge.
+ * 		- sets slave mode to reset mode.
+ * 		- capture/compare unit as input.
+ * 		- latch(capture) counter value in CCR1 on rising edge of input signal.
+ * 		(to calculate frequency).
+ * 		- latch(capture) counter value in CCR2 on falling edge.
+ * 		(to calculate active duty cycle)
+ * 		- set
+ *
+ * Note: 'freqMin' is in mHz.
+ *
+ * Hence:
+ * T_input = CCR1 * T_count
+ * t_on = (CCR1 - CCR2) * T_count
+ */
+void TIM_voidInitFreqAndDutyMeasurement(
+	const u8 unitNumber, const u8 gpioMap, const u64 freqMin);
+
+/*
+ * gets frequency of the measured signal.
+ * signal measurement must be first init by function:
+ * "TIM_voidInitFreqAndDutyMeasurement()"
+ *
+ * Note: return value is in mHz.
+ */
+u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber);
+
+/*
+ * gets active duty cycle of the measured signal.
+ * signal measurement must be first init by function:
+ * "TIM_voidInitFreqAndDutyMeasurement()"
+ *
+ * Note: return value is in range 0 to 65535.
+ */
+u16 TIM_u16GetDutyCycleMeasured(const u8 unitNumber);
 
 /******************************************************************************
  * Advanced 32-bit tick-counter.

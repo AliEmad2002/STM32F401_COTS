@@ -1695,7 +1695,10 @@ u64 TIM_u64SetFreqByChangingPrescaler(const u8 unitNumber, const u64 freqmHz)
 	/*
 	 * since: Frequency = clk_int / (ARR * prescaler)
 	 */
-	u16 arr = TIM[unitNumber]->ARR;
+	u32 arr = TIM[unitNumber]->ARR;
+	if (arr == 0)
+		arr = 1 << 16;
+
 	u32 prescaler = clkIntmHz  / freqmHz / arr;
 
 	if (prescaler == 0  ||  prescaler > 65535)
@@ -1832,13 +1835,6 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 		u8 pin = portAndPin & 0x0F;
 		GPIO_PortName_t port = (GPIO_PortName_t)(portAndPin >> 4);
 
-		#if DEBUG_ON == 1
-		trace_printf(
-			"TIM%u, Ch%u channel initialized on port: %u, pin: %u\n",
-			unitNumber, ((ch > TIM_Channel_2) ? (ch - 2) : ch),
-			port, pin);
-		#endif
-
 		GPIO_voidSetPinMode(port, pin, GPIO_Mode_AF_PushPull);
 		GPIO_voidSetPinOutputSpeed(port, pin, GPIO_OutputSpeed_50MHz);
 
@@ -1846,6 +1842,13 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 			AFIO_voidRemap(AFIO_Peripheral_TIM3, map);
 		else if (unitNumber == 2)
 			AFIO_voidRemap(AFIO_Peripheral_TIM2, map);
+
+		#if DEBUG_ON == 1
+		trace_printf(
+			"TIM%u, Ch%u channel initialized on port: %u, pin: %u\n as output",
+			unitNumber, ((ch > TIM_Channel_2) ? (ch - 2) : ch),
+			port, pin);
+		#endif
 	}
 }
 
@@ -1941,25 +1944,134 @@ u64 TIM_u64InitTimTrigger(
  * - Configures timer channel_1 as pulled down input on the GPIO map
  * 'gpioMap'.
  * - Does timer peripheral needed configurations:
- * 		- clock source is internal clock.
+ * 		- auto reload register is zero.
  * 		- prescaler is the value at which a signal of 'freqMin' would take
  * 		2^16 - 1 counter ticks.
  * 		- counting direction is up-counting.
- * 		- auto reload register is zero.
- * 		- trigger source is 'TI1F_ED' (channel_1 edge detector output).
+ * 		- trigger source is 'TI1FP1' (channel_1 edge detector output).
+ * 		- trigger polarity is active high / rising edge.
  * 		- sets slave mode to reset mode.
- * 		- capture/compare unit as input, and capture:
- * 			- counter value in CCR1 on rising edge of input signal.
- * 			(to calculate frequency).
- * 			- counter value in CCR2 on falling edge.
- * 			(to calculate active duty cycle)
+ * 		- capture/compare unit as input.
+ * 		- latch(capture) counter value in CCR1 on rising edge of input signal.
+ * 		(to calculate frequency).
+ * 		- latch(capture) counter value in CCR2 on falling edge.
+ * 		(to calculate active duty cycle)
+ * 		- set
  *
  * Note: 'freqMin' is in mHz.
+ *
+ * Hence:
+ * T_input = CCR1 * T_count
+ * t_on = (CCR1 - CCR2) * T_count
  */
 void TIM_voidInitFreqAndDutyMeasurement(
 	const u8 unitNumber, const u8 gpioMap, const u64 freqMin)
 {
+	/*	enable RCC clock (if not enabled)	*/
+	TIM_voidEnableTimRCC(unitNumber);
 
+	/*
+	 * Configures timer channel_1 as pulled down input on the GPIO map:
+	 * 'gpioMap'.
+	 */
+	u8 portAndPin = TIM_u8GetPortAndPin(unitNumber, TIM_Channel_1, gpioMap);
+
+	if (portAndPin == 0xFF)
+	{
+		ErrorHandler_voidExecute(0);
+	}
+
+	else
+	{
+		u8 pin = portAndPin & 0x0F;
+		GPIO_PortName_t port = (GPIO_PortName_t)(portAndPin >> 4);
+
+		GPIO_voidSetPinInputPullDown(port, pin);
+		TIM_u8GetPeripheralIndex(unitNumber);
+		GPIO_voidSetPinOutputSpeed(port, pin, GPIO_OutputSpeed_Null);
+
+		if (unitNumber == 3)
+			AFIO_voidRemap(AFIO_Peripheral_TIM3, gpioMap);
+		else if (unitNumber == 2)
+			AFIO_voidRemap(AFIO_Peripheral_TIM2, gpioMap);
+
+		#if DEBUG_ON == 1
+		trace_printf(
+			"TIM%u, Ch1 channel initialized on port: %u, pin: %u\n as input.",
+			unitNumber, port, pin);
+		#endif
+	}
+
+	/*	set auto reload register to zero	*/
+	TIM[unitNumber]->ARR = (1 << 16) - 1;
+
+	/*
+	 * set prescaler at a value that gives duration of 1 / 'freqMin' for every
+	 * 2^16 ticks
+	 */
+	TIM_u64SetFreqByChangingPrescaler(unitNumber, freqMin);
+
+	/*	set counting direction up-counting	*/
+	TIM_voidSetCounterDirection(unitNumber, TIM_CountDirection_Up);
+
+	/*	set trigger source 'TI1FP1'	*/
+	TIM_voidSetTriggerSource(unitNumber, TIM_TriggerSource_TI1FP1);
+
+	/* set trigger polarity	*/
+	TIM_voidSetExternalTriggerPolarity(
+		unitNumber, TIM_ChannelPolarity_ActiveHigh_RisingEdge);
+
+	/*	set capture/compare polarity	*/
+	TIM_voidSetCaptureCompareChannelPolarity(
+		unitNumber, TIM_Channel_1, TIM_ChannelPolarity_ActiveHigh_RisingEdge);
+
+	TIM_voidSetCaptureCompareChannelPolarity(
+		unitNumber, TIM_Channel_2, TIM_ChannelPolarity_ActiveLow_FallingEdge);
+
+	/*	sets slave mode to reset mode	*/
+	TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Reset);
+
+	/*	select capture/compare 1 input to be TI1	*/
+	TIM_voidSetCaptureCompareSelection(
+		unitNumber, TIM_Channel_1, TIM_CaptureCompareSelection_Input_0);
+
+	/*	select capture/compare 2 input to be TI1	*/
+	TIM_voidSetCaptureCompareSelection(
+		unitNumber, TIM_Channel_2, TIM_CaptureCompareSelection_Input_1);
+
+	/*	enable capture/compare	*/
+	TIM_voidEnableCaptureCompareChannel(unitNumber, TIM_Channel_1);
+	TIM_voidEnableCaptureCompareChannel(unitNumber, TIM_Channel_2);
+
+	/*	start counter	*/
+	TIM_voidEnableCounter(unitNumber);
+}
+
+/*
+ * gets frequency of the measured signal.
+ * signal measurement must be first init by function:
+ * "TIM_voidInitFreqAndDutyMeasurement()"
+ *
+ * Note: return value is in mHz.
+ */
+inline u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber)
+{
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+	return clkIntmHz / TIM[unitNumber]->PSC / TIM[unitNumber]->CCR1;
+}
+
+/*
+ * gets active duty cycle of the measured signal.
+ * signal measurement must be first init by function:
+ * "TIM_voidInitFreqAndDutyMeasurement()"
+ *
+ * Note: return value is in range 0 to 65535.
+ */
+inline u16 TIM_u16GetDutyCycleMeasured(const u8 unitNumber)
+{
+	u16 ccr1 = TIM[unitNumber]->CCR1;
+	u16 ccr2 = TIM[unitNumber]->CCR2;
+	return 65535 * (u32)(ccr1 - ccr2) / ccr1;
 }
 
 /******************************************************************************
