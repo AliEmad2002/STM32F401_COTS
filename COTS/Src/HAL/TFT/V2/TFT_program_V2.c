@@ -18,6 +18,7 @@
 #include "TIM_interface.h"
 #include "SPI_interface.h"
 #include "DMA_interface.h"
+#include "NVIC_interface.h"
 
 /*	SELF	*/
 #include "TFT_cmd.h"
@@ -77,12 +78,14 @@ void TFT2_voidInit(
 		tftPtr->dmaCh = DMA_ChannelNumber_3;
 		peripheralNumber = RCC_PERIPHERAL_SPI1;
 		bus = RCC_Bus_APB2;
+		NVIC_voidEnableInterrupt(NVIC_Interrupt_DMA1_Ch3);
 	}
 	else
 	{
 		tftPtr->dmaCh = DMA_ChannelNumber_5;
 		peripheralNumber = RCC_PERIPHERAL_SPI2;
 		bus = RCC_Bus_APB1;
+		NVIC_voidEnableInterrupt(NVIC_Interrupt_DMA1_Ch5);
 	}
 
 	/*	enable SPI clock (if not enabled)	*/

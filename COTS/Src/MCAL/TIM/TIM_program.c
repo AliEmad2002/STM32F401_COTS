@@ -1928,6 +1928,41 @@ u64 TIM_u64InitTimTrigger(
 }
 
 /******************************************************************************
+ * Signal measurement.
+ *****************************************************************************/
+/*
+ * This function inits frequency and duty cycle measurement on timer
+ * 'unitNumber' using channel_1.
+ * (user is forced to use channel_1 as it is the only one that has edge
+ * triggering capability of the timer/counter unit.
+ *
+ * This function in detail:
+ * - Enables RCC clock (if not enabled) for the timer unit 'unitNumber'.
+ * - Configures timer channel_1 as pulled down input on the GPIO map
+ * 'gpioMap'.
+ * - Does timer peripheral needed configurations:
+ * 		- clock source is internal clock.
+ * 		- prescaler is the value at which a signal of 'freqMin' would take
+ * 		2^16 - 1 counter ticks.
+ * 		- counting direction is up-counting.
+ * 		- auto reload register is zero.
+ * 		- trigger source is 'TI1F_ED' (channel_1 edge detector output).
+ * 		- sets slave mode to reset mode.
+ * 		- capture/compare unit as input, and capture:
+ * 			- counter value in CCR1 on rising edge of input signal.
+ * 			(to calculate frequency).
+ * 			- counter value in CCR2 on falling edge.
+ * 			(to calculate active duty cycle)
+ *
+ * Note: 'freqMin' is in mHz.
+ */
+void TIM_voidInitFreqAndDutyMeasurement(
+	const u8 unitNumber, const u8 gpioMap, const u64 freqMin)
+{
+
+}
+
+/******************************************************************************
  * Advanced 32-bit tick-counter.
  *
  * Connects two advanced or 2 to 5 GP timers in master/salve topology. The
