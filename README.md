@@ -75,6 +75,7 @@ Note that all of these drivers have dependancies on previously mentioned LIB and
   - ESC (Electronic Speed Control)
     * Interfaces bluerobotics basic ESC.
   - IR
+    * Non-blocking IR data reciever.
   - Keypad
   - LCD
   - TFT
