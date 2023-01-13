@@ -47,3 +47,9 @@ Following will list all available interfaces in each layer.
   - Error_Handler
     * Usually used when "Debug_active" is enabled.
     * Useful in debugging.
+   
+# MCAL (Micro-Controller Abstraction Layer):
+following names are peripherals' abbervation in STM datasheets
+  - ADC
+  - BKP
+  
