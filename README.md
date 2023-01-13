@@ -1,5 +1,5 @@
 # STM32F401x_10x_COTS
-In this project I've covered most of LIB, MCAL, HAL (ECUAL) drivers for STM32F401 and STM32F103 (Black-pill and Blue-pill).
+In this project I've covered most of LIB, MCAL, HAL drivers for STM32F401 and STM32F103 (Black-pill and Blue-pill).
 
 The layering model used here is the simplist (no-RTOS):
 # ![image](https://user-images.githubusercontent.com/99054912/212318302-c65479f6-719d-4bc9-8d42-e5014700f8d5.png)
@@ -67,3 +67,20 @@ following names are peripherals' abbervation in STM datasheets
   - SYSCFG
   - TIM
   - UART
+
+# HAL (Hardware Abstraction Layer):
+Note that all of these drivers have dependancies on previously mentioned LIB and MCAL layers.
+  - DAC
+    * Based on R-2R implementation.
+  - ESC (Electronic Speed Control)
+    * Interfaces bluerobotics basic ESC.
+  - IR
+  - Keypad
+  - LCD
+  - TFT
+  - LED_Matrix
+  - RGB_LED
+  - Seven_Segment
+  - Shift_Register
+  - Stepper_Motor
+  - WiFi
