@@ -16,6 +16,7 @@
 /*	MCAL	*/
 #include "RCC_interface.h"
 #include "GPIO_interface.h"
+#include "NVIC_interface.h"
 
 /*	SELF	*/
 #include "TIM_interface.h"
@@ -42,7 +43,7 @@
  * "unitNumber" is of type "u8".
  */
 #define IS_GP_2_TO_5(unitNumber)  							\
-	((2 <= (unitNumber)  ||  (unitNumber) <= 5) ?  true  :  false)
+	((2 <= (unitNumber)  &&  (unitNumber) <= 5) ?  true  :  false)
 
 /*
  * checks if "unitNumber" is in range of advanced timers or GPT's, all GPT's.
@@ -661,6 +662,33 @@ void TIM_voidGenerateSoftwareInterruptEvent(
 	else
 	{
 		ErrorHandler_voidExecute(0);
+	}
+}
+
+/*	gets number of interrupt vector of update event in NVIC	*/
+u8 TIM_u8GetUpdateEventInterruptNumber(u8 unitNumber)
+{
+	switch(unitNumber)
+	{
+	case 1:
+		return NVIC_Interrupt_TIM1UP;
+	case 2:
+		return NVIC_Interrupt_TIM2;
+	case 3:
+		return NVIC_Interrupt_TIM3;
+	case 4:
+		return NVIC_Interrupt_TIM4;
+	case 5:
+		return NVIC_Interrupt_TIM5;
+	case 6:
+		return NVIC_Interrupt_TIM6;
+	case 7:
+		return NVIC_Interrupt_TIM7;
+	case 8:
+		return NVIC_Interrupt_TIM8UP;
+	default:
+		ErrorHandler_voidExecute(0);
+		return 0;
 	}
 }
 
@@ -1918,7 +1946,10 @@ u64 TIM_u64InitTimTrigger(
 	TIM_voidSetARR(unitNumber, clkIntmHz / rateInitial / pre);
 
 	/*	set callback	*/
-	TIM_voidSetCallbackGP(unitNumber, trigFuncPtr);
+	if (IS_ADV(unitNumber))
+		TIM_voidSetCallbackADV(unitNumber, TIM_ADV_Vector_UP, trigFuncPtr);
+	else
+		TIM_voidSetCallbackGP(unitNumber, trigFuncPtr);
 
 	/*	enable update event (UNF) interrupt	*/
 	TIM_voidEnableInterrupt(unitNumber, TIM_Interrupt_Update);

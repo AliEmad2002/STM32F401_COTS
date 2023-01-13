@@ -289,6 +289,25 @@ inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
 }
 
 /*
+ * inits vertical scroll mode.
+ * Note:
+ * sum of 'topFixedAreaLen' + 'scrollAreaLen' + 'bottomFixedAreaLen' must be
+ * equal to 162. otherwise, mode may not work properly.
+ */
+void TFT2_voidInitScroll(
+	const TFT2_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
+	u8 bottomFixedAreaLen)
+{
+	TFT2_WRITE_CMD(tftPtr, 0x33);
+	TFT2_WRITE_DATA(tftPtr, 0);
+	TFT2_WRITE_DATA(tftPtr, topFixedAreaLen);
+	TFT2_WRITE_DATA(tftPtr, 0);
+	TFT2_WRITE_DATA(tftPtr, scrollAreaLen);
+	TFT2_WRITE_DATA(tftPtr, 0);
+	TFT2_WRITE_DATA(tftPtr, bottomFixedAreaLen);
+}
+
+/*
  * scrolls the screen.
  * Notes:
  * - 'startingLine' is the index of the line to start the scrolling area with. it

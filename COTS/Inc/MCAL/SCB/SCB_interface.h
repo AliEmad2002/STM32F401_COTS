@@ -13,31 +13,31 @@
 #define SCB_INTERFACE_H_
 
 typedef enum{
-	MSCB_PRIGROUP_group16_sub0	=	3,
-	MSCB_PRIGROUP_group8_sub2	=	4,
-	MSCB_PRIGROUP_group4_sub4 	=	5,
-	MSCB_PRIGROUP_group2_sub8 	=	6,
-	MSCB_PRIGROUP_group0_sub16 	=	7,
-}MSCB_PRIGROUP_t;
+	SCB_PRIGROUP_group16_sub0	=	3,
+	SCB_PRIGROUP_group8_sub2	=	4,
+	SCB_PRIGROUP_group4_sub4 	=	5,
+	SCB_PRIGROUP_group2_sub8 	=	6,
+	SCB_PRIGROUP_group0_sub16 	=	7,
+}SCB_PRIGROUP_t;
 
 typedef enum{
-	MSCB_VTOR_Code,
-	MSCB_VTOR_SRAM
-}MSCB_VTOR_t;
+	SCB_VTOR_Code,
+	SCB_VTOR_SRAM
+}SCB_VTOR_t;
 
-void MSCB_voidSetPriorityGroupsAndSubGroupsNumber(MSCB_PRIGROUP_t set);
+void SCB_voidSetPriorityGroupsAndSubGroupsNumber(SCB_PRIGROUP_t set);
 
-MSCB_PRIGROUP_t MSCB_enumGetPriorityGroupsAndSubGroupsNumber(void);
+SCB_PRIGROUP_t SCB_enumGetPriorityGroupsAndSubGroupsNumber(void);
 
-void MSCB_voidSetCorePeripheralPriority(u8 sysHandlerInex, u8 priVal);
+void SCB_voidSetCorePeripheralPriority(u8 sysHandlerInex, u8 priVal);
 
-void MSCB_voidResetSystem(void);
+void SCB_voidResetSystem(void);
 
 /*
  * address alignment is user's responsibility.
  */
-void MSCB_voidWriteVectorTableOffset(u32 offset, MSCB_VTOR_t type);
+void SCB_voidWriteVectorTableOffset(u32 offset, SCB_VTOR_t type);
 
-u32 MSCB_u32GetVectorTableOffset(void);
+u32 SCB_u32GetVectorTableOffset(void);
 
 #endif /* SCB_INTERFACE_H_ */

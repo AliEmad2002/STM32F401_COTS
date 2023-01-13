@@ -50,30 +50,30 @@ b8 NVIC_b8GetActiveFlag(NVIC_Interrupt_t interrupt)
 void NVIC_voidSetInterruptPriority(NVIC_Interrupt_t interrupt, u8 group, u8 sub)
 {
 	// read current priority grouping settings:
-	u8 priGroupSettings = MSCB_enumGetPriorityGroupsAndSubGroupsNumber();
+	u8 priGroupSettings = SCB_enumGetPriorityGroupsAndSubGroupsNumber();
 
 	// calculate binary point:
 	u8 binPoint;
 
 	switch(priGroupSettings)
 	{
-	case MSCB_PRIGROUP_group16_sub0:
+	case SCB_PRIGROUP_group16_sub0:
 		binPoint = group;
 		break;
 
-	case MSCB_PRIGROUP_group8_sub2:
+	case SCB_PRIGROUP_group8_sub2:
 		binPoint = sub | (group << 1);
 		break;
 
-	case MSCB_PRIGROUP_group4_sub4:
+	case SCB_PRIGROUP_group4_sub4:
 		binPoint = sub | (group << 2);
 		break;
 
-	case MSCB_PRIGROUP_group2_sub8:
+	case SCB_PRIGROUP_group2_sub8:
 		binPoint = sub | (group << 3);
 		break;
 
-	default:	//case MSCB_PRIGROUP_group0_sub16:
+	default:	//case SCB_PRIGROUP_group0_sub16:
 		binPoint = sub;
 		break;
 	}
@@ -81,27 +81,27 @@ void NVIC_voidSetInterruptPriority(NVIC_Interrupt_t interrupt, u8 group, u8 sub)
 	switch (interrupt)
 	{
 	case NVIC_Interrupt_MemManage:
-		MSCB_voidSetCorePeripheralPriority(4, binPoint);
+		SCB_voidSetCorePeripheralPriority(4, binPoint);
 		break;
 
 	case NVIC_Interrupt_BusFault:
-		MSCB_voidSetCorePeripheralPriority(5, binPoint);
+		SCB_voidSetCorePeripheralPriority(5, binPoint);
 		break;
 
 	case NVIC_Interrupt_UsageFault:
-		MSCB_voidSetCorePeripheralPriority(6, binPoint);
+		SCB_voidSetCorePeripheralPriority(6, binPoint);
 		break;
 
 	case NVIC_Interrupt_SVCall:
-		MSCB_voidSetCorePeripheralPriority(11, binPoint);
+		SCB_voidSetCorePeripheralPriority(11, binPoint);
 		break;
 
 	case NVIC_Interrupt_PendSV:
-		MSCB_voidSetCorePeripheralPriority(14, binPoint);
+		SCB_voidSetCorePeripheralPriority(14, binPoint);
 		break;
 
 	case NVIC_Interrupt_Systick:
-		MSCB_voidSetCorePeripheralPriority(15, binPoint);
+		SCB_voidSetCorePeripheralPriority(15, binPoint);
 		break;
 
 	default:

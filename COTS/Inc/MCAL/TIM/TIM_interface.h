@@ -407,6 +407,9 @@ void TIM_voidDisableInterrupt(u8 unitNumber, TIM_Interrupt_t interrupt);
 void TIM_voidGenerateSoftwareInterruptEvent(
 	u8 unitNumber, TIM_Interrupt_t event);
 
+/*	gets number of interrupt vector of update event in NVIC	*/
+u8 TIM_u8GetUpdateEventInterruptNumber(u8 unitNumber);
+
 
 /******************************************************************************
  * DMA.
