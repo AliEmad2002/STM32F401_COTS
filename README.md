@@ -7,7 +7,7 @@ Following will list all available interfaces in each layer.
 
 # LIB layer:
   - Std_Types:
-    # contains basic datatypes used in MCU coding.
+    * contains basic datatypes used in MCU coding.
     
   - Bit_Math
     
