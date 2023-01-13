@@ -52,4 +52,18 @@ Following will list all available interfaces in each layer.
 following names are peripherals' abbervation in STM datasheets
   - ADC
   - BKP
-  
+  - DMA
+  - EXTI
+  - FPEC
+  - FPU
+  - GPIO
+  - DAC
+  - NVIC
+  - PWR
+  - RCC
+  - SCB
+  - SPI
+  - STK
+  - SYSCFG
+  - TIM
+  - UART
