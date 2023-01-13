@@ -6,8 +6,7 @@ The layering model used here is the simplist (no-RTOS):
 Following will list all available interfaces in each layer.
 
 # LIB layer:
-  - Std_Types
-    * Basic datatypes used in MCU coding.
+  - Std_Types * Basic datatypes used in MCU coding.
     
   - Bit_Math
     * Macros to commonly used logic operations.
