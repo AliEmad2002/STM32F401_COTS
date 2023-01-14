@@ -79,6 +79,10 @@ void DMA_voidDisableInterrupt(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t c
 /*	sets interrupt callback	*/
 void DMA_voidSetInterruptCallback(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber, void (*functionPointer)(void));
 
+/*	gets number of interrupt vector index in NVIC	*/
+u8 DMA_u8GetInterruptVectorIndex(
+	DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
+
 /*	enables channel	*/
 void DMA_voidEnableChannel(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);

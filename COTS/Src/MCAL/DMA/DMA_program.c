@@ -14,6 +14,7 @@
 
 /*	MCAL	*/
 #include "RCC_interface.h"
+#include "NVIC_interface.h"
 
 /*	SELF	*/
 #include "DMA_interface.h"
@@ -105,6 +106,28 @@ void DMA_voidSetInterruptCallback(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
 		else
 		{
 			DMA2GlobalInterruptCallbackArr[channelNumber] = functionPointer;
+		}
+	}
+}
+
+/*	gets number of interrupt vector index in NVIC	*/
+u8 DMA_u8GetInterruptVectorIndex(
+	DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
+{
+	if (unitNumber == DMA_UnitNumber_1)
+		return NVIC_Interrupt_DMA1_Ch1 + channelNumber;
+	else	//	if (unitNumber == DMA_UnitNumber_2)
+	{
+		if (channelNumber < DMA_ChannelNumber_4)
+			return NVIC_Interrupt_DMA1_Ch2 + channelNumber;
+		else if (channelNumber < DMA_ChannelNumber_6)
+			/*	because channels 4 & 5 share the same vector	*/
+			return NVIC_Interrupt_DMA1_Ch2 + DMA_ChannelNumber_4;
+		else
+		{
+			/*	because the are only 5 channels in DMA2	*/
+			ErrorHandler_voidExecute(0);
+			return 0;
 		}
 	}
 }
