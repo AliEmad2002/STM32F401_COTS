@@ -47,13 +47,14 @@ b8 NVIC_b8GetActiveFlag(NVIC_Interrupt_t interrupt)
 	return GET_BIT(NVIC->IABR[interrupt/32], interrupt%32);
 }
 
-void NVIC_voidSetInterruptPriority(NVIC_Interrupt_t interrupt, u8 group, u8 sub)
+void NVIC_voidSetInterruptPriority(volatile NVIC_Interrupt_t interrupt, u8 group, u8 sub)
 {
 	// read current priority grouping settings:
-	u8 priGroupSettings = SCB_enumGetPriorityGroupsAndSubGroupsNumber();
+	SCB_PRIGROUP_t priGroupSettings =
+		(SCB_PRIGROUP_t)SCB_enumGetPriorityGroupsAndSubGroupsNumber();
 
 	// calculate binary point:
-	u8 binPoint;
+	volatile u8 binPoint;
 
 	switch(priGroupSettings)
 	{

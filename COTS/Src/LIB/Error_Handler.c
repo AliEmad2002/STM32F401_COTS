@@ -34,3 +34,8 @@ void ErrorHandler_voidExecute(ErrorHandler_ErrorSource_t errSource)
 {
 	ERR_HANDLER(errSource);
 }
+
+void HardFault_IRQ(void)
+{
+	ErrorHandler(55);
+}

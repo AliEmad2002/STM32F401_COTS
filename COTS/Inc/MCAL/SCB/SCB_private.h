@@ -12,13 +12,23 @@
 #ifndef SCB_PRIVATE_H_
 #define SCB_PRIVATE_H_
 
+typedef struct{
+	u32 ICSR;
+	u32 VTOR;
+	u32 AIRCR;
+	u32 SCR;
+	u32 CCR;
+	u8 SHPR[12];
+	u32 SHCRS;
+	u32 CFSR;
+	u32 HFSR;
+	u32 MMAR;
+	u32 BFAR;
+}SCB_t;
+
 #define SCB_BASE_ADD	((u32)0xE000ED00)
 
-#define SCB_VTOR		(*(volatile u32*)(SCB_BASE_ADD + 0x08))
-
-#define SCB_AIRCR		(*(volatile u32*)(SCB_BASE_ADD + 0x0C))
-
-#define SCB_SHPR		((volatile u8*)(SCB_BASE_ADD + 0x18))
+static SCB_t* const scb = (SCB_t* const)SCB_BASE_ADD;
 
 #define SCB_VECTKEY	0x5FA
 

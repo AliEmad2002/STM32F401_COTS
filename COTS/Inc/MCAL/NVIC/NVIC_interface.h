@@ -165,6 +165,6 @@ void NVIC_voidClearPendingFlag(NVIC_Interrupt_t interrupt);
 
 b8 NVIC_b8GetActiveFlag(NVIC_Interrupt_t interrupt);
 
-void NVIC_voidSetInterruptPriority(NVIC_Interrupt_t interrupt, u8 group, u8 sub);
+void NVIC_voidSetInterruptPriority(volatile NVIC_Interrupt_t interrupt, u8 group, u8 sub);
 
 #endif /* NVIC_INTERFACE_H_ */

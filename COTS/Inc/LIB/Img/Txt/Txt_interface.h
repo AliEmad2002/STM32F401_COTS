@@ -8,15 +8,15 @@
 #ifndef INCLUDE_LIB_IMG_TXT_TXT_INTERFACE_H_
 #define INCLUDE_LIB_IMG_TXT_TXT_INTERFACE_H_
 
-/*
- * An enum representing state of orientation in degrees. (counter clock-wise)
- */
 typedef enum{
-	Txt_Orientation_0,
-	Txt_Orientation_90,
-	Txt_Orientation_180,
-	Txt_Orientation_270
-}Txt_Orientation_t;
+	Txt_VerticalMirroring_Disabled,
+	Txt_VerticalMirroring_Enabled
+}Txt_VerticalMirroring_t;
+
+typedef enum{
+	Txt_HorizontalMirroring_Disabled,
+	Txt_HorizontalMirroring_Enabled
+}Txt_HorizontalMirroring_t;
 
 /*
  * a function that copies character image in a given size to a given position
@@ -41,9 +41,28 @@ typedef enum{
  * 	- if 'size' equals 2 ==> char will take a rectangle of 10x16 pixels.
  *  And  so on...
  */
-void Txt_voidCpyCharToImg(
-	u8 ch, u16** pixArr, u16 charColor, u16 bgColor, u8 size,
-	Txt_Orientation_t orientation, u8 tlX, u8 tlY);
+void Txt_voidCpyCharToDynamicPixArr(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u16** pixArr);
+
+void Txt_voidCpyCharToStaticPixArr(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+
+/*
+ * A function that draws a string on a pixel array. Uses previous two functions
+ */
+void Txt_voidCpyStrToDynamicPixArr(
+	const u8* str, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlXInitial, u8 tlYInitial, u8 pixArrWidth, u16** pixArr);
+
+void Txt_voidCpyStrToStaticPixArr(
+	const u8* str, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlXInitial, u8 tlYInitial, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
 
 
 #endif /* INCLUDE_LIB_IMG_TXT_TXT_INTERFACE_H_ */
