@@ -3,6 +3,10 @@
  *
  *  Created on: Jan 14, 2023
  *      Author: Ali Emad Ali
+ *
+ * Why buffering into a pixel array then sending to the TFT?
+ * 	- DMA which makes the image data transfer much faster.
+ * 	- Less bound setting operations, which are monsters eating cycles.
  */
 
 #ifndef INCLUDE_LIB_IMG_TXT_TXT_INTERFACE_H_
@@ -62,7 +66,8 @@ void Txt_voidCpyStrToDynamicPixArr(
 void Txt_voidCpyStrToStaticPixArr(
 	const u8* str, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
-	u8 tlXInitial, u8 tlYInitial, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+	u8 tlXInitial, u8 tlYInitial,
+	u8 pixArrHieght, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
 
 
 #endif /* INCLUDE_LIB_IMG_TXT_TXT_INTERFACE_H_ */
