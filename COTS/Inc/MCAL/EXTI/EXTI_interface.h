@@ -33,6 +33,7 @@ void EXTI_voidEnableLineInterrupt(u8 line);
 
 void EXTI_voidDisbleLineInterrupt(u8 line);
 
+/*	Enables line in EXTI itself	*/
 void EXTI_voidEnableLine(u8 line);
 #define EXTI_ENABLE_LINE(line) (SET_BIT(EXTI->IMR, (line)))
 

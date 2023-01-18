@@ -185,6 +185,17 @@ b8 ADC_b8IsCalibrationResetDone(ADC_UnitNumber_t un);
 void ADC_voidWaitCalibrationReset(ADC_UnitNumber_t un);
 
 /******************************************************************************
+ * GPIO pins connections:
+ ******************************************************************************/
+/*
+ * returns number of port in the most significant 4-bits, and number of pin in
+ * the other 4-bits.
+ *
+ * Notice that in blue-pill, ADC1 & ADC2 share the same pins
+ */
+u8 ADC_u8GetPortAndPinOfChannel(ADC_ChannelNumber_t ch);
+
+/******************************************************************************
  * Status:
  * Note:
  * all flags are set by HW and cleared by SW, except for 'EOC', it's cleared by

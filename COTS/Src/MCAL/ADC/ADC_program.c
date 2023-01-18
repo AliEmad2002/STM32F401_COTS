@@ -10,6 +10,9 @@
 #include "Bit_Math.h"
 #include "Error_Handler_interface.h"
 
+/*	MCAL	*/
+#include "GPIO_interface.h"
+
 /*	SELF	*/
 #include "ADC_private.h"
 #include "ADC_interface.h"
@@ -76,6 +79,21 @@ inline b8 ADC_b8IsCalibrationResetDone(ADC_UnitNumber_t un)
 void ADC_voidWaitCalibrationReset(ADC_UnitNumber_t un)
 {
 	while(!ADC_b8IsCalibrationResetDone(un));
+}
+
+/******************************************************************************
+ * GPIO pins connections:
+ ******************************************************************************/
+u8 ADC_u8GetPortAndPinOfChannel(ADC_ChannelNumber_t ch)
+{
+	if (ch <= ADC_ChannelNumber_7)
+		return GPIO_Pin_A0 + ch;
+
+	else if (ch <= ADC_ChannelNumber_9)
+		return GPIO_Pin_B0 + ch - ADC_ChannelNumber_8;
+
+	else
+		return GPIO_Pin_C0 + ch - ADC_ChannelNumber_10;
 }
 
 /******************************************************************************
