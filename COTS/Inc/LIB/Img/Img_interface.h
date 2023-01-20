@@ -60,6 +60,7 @@ typedef struct{
 	Color_t color;
 }Triangle_t;
 
+#include "Img_config.h"
 
 typedef struct{
 	Rectangle_t rectArr[MAX_NUMBER_OF_EACH_SHAPE_PER_FRAME];

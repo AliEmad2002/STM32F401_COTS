@@ -8,87 +8,15 @@
 /*	LIB	*/
 #include "Std_Types.h"
 #include "Bit_Math.h"
+#include "diag/trace.h"
 
 /*	SELF	*/
 #include "Txt_drawings.h"
 #include "Txt_interface.h"
 
+#define GET_PIX(ch, i, j)	(GET_BIT(Txt_drawings[(ch)][(i)], (j)))
 
-void Txt_voidCpyCharToDynamicPixArr(
-	u8 ch, u16 charColor, u16 bgColor, u8 size,
-	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
-	u8 tlX, u8 tlY, u16** pixArr)
-{
-	s8 jStart, jEnd, jIncrementer;
-	s8 iStart, iEnd, iIncrementer;
-
-	switch (hMirror)
-	{
-	case Txt_HorizontalMirroring_Disabled:
-		jStart = 0;		jEnd = 8;	jIncrementer = 1;
-		break;
-	default:
-		jStart = 7;		jEnd = -1;	jIncrementer = -1;
-	}
-
-	switch (vMirror)
-	{
-	case Txt_VerticalMirroring_Disabled:
-		iStart = 0;		iEnd = 5;	iIncrementer = 1;
-		break;
-	default:
-		iStart = 4;		iEnd = -1;	iIncrementer = -1;
-	}
-
-	u8 x = tlX;
-	for (s8 i = iStart; i != iEnd; i += iIncrementer)
-	{
-		/*
-		 * after resizing, the pixel located in (i, j), covers the rectangle
-		 * of top left corner: 		   (i * size, j * size),
-		 * and of bottom right corner: ((i+1) * size - 1, (j+1) * size - 1)
-		 */
-		/*
-		 * since the previously mentioned rectangle is shifted by:
-		 * (tlX, tlY), then the actual boundaries of the pixel (i, j) after
-		 * resizing is:
-		 * of top left corner: 		   (i * size + tlX, j * size + tlY),
-		 * and of bottom right corner:
-		 * 		((i+1) * size + tlX - 1, (j+1) * size + tlY - 1)
-		 */
-		/*
-		 * this commented loop is the one that exactly puts the previous
-		 * math to work. But.. there's always the programmer's way, which
-		 * is the loop implemented after this one, and the variables 'x',
-		 * 'y'.
-		 */
-		u8 y = tlY;
-		for (s8 j = jStart; j != jEnd; j += jIncrementer)
-		{
-			/*	find color of a pixel before resizing	*/
-			u16 color = GET_BIT(Txt_drawings[ch][i], j) ? charColor : bgColor;
-
-			/*for (u8 y = j * size + tlY; y < (j+1) * size + tlY; y++)
-			{
-				for (u8 x = i * size + tlX; x < (i+1) * size + tlX; x++)
-				{
-					pixArr[y][x] = color;
-				}
-			}*/
-			for (u8 Y = y; Y < y + size; Y++)
-			{
-				for (u8 X = x; X < x + size; X++)
-				{
-					pixArr[Y][X] = color;
-				}
-			}
-			y += size;
-		}
-		x += size;
-	}
-}
-
-void Txt_voidCpyCharToStaticPixArr(
+void Txt_voidCpyCharToStaticPixArrNormalOrientation(
 	u8 ch, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
 	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth])
@@ -122,7 +50,7 @@ void Txt_voidCpyCharToStaticPixArr(
 		for (s8 j = jStart; j != jEnd; j += jIncrementer)
 		{
 			/*	find color of a pixel before resizing	*/
-			u16 color = GET_BIT(Txt_drawings[ch][i], j) ? charColor : bgColor;
+			u16 color = GET_PIX(ch, i, j) ? charColor : bgColor;
 
 			for (u8 Y = y; Y < y + size; Y++)
 			{
@@ -137,33 +65,34 @@ void Txt_voidCpyCharToStaticPixArr(
 	}
 }
 
-void Txt_voidCpyStrToDynamicPixArr(
-	const u8* str, u16 charColor, u16 bgColor, u8 size,
+void Txt_voidCpyCharToStaticPixArrRightOrientation(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
-	u8 tlXInitial, u8 tlYInitial, u8 pixArrWidth, u16** pixArr)
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth])
 {
-	u8 xIncrementer = size * 6;
-	u8 yIncrementer = size * 8;
-
-	u8 tlX = tlXInitial;
-	u8 tlY = tlYInitial;
-
-	for (u16 i = 0; str[i] != '\0'; i++)
+	for (u8 i = 0; i < 8; i++)
 	{
-		Txt_voidCpyCharToDynamicPixArr(
-			str[i], charColor, bgColor, size,
-			hMirror, vMirror, tlX, tlY, pixArr);
-
-		tlX += xIncrementer;
-		if (tlX > pixArrWidth)
+		for (u8 j = 0; j < 5; j++)
 		{
-			tlX = tlXInitial;
-			tlY += yIncrementer;
+			u8 x = tlX + 7 - i;
+			u8 y = tlY + j;
+			pixArr[y][x] = GET_PIX(ch, i, j) ? charColor : bgColor;
 		}
+
 	}
 }
 
-void Txt_voidCpyStrToStaticPixArr(
+void Txt_voidCpyCharToStaticPixArrLeftOrientation(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+
+void Txt_voidCpyCharToStaticPixArr180DegreesOrientation(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+
+void Txt_voidCpyStrToStaticPixArrNormalOrientation(
 	const u8* str, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
 	u8 tlXInitial, u8 tlYInitial,
@@ -201,7 +130,7 @@ void Txt_voidCpyStrToStaticPixArr(
 		}
 
 		/*	chase other characters	*/
-		Txt_voidCpyCharToStaticPixArr(
+		Txt_voidCpyCharToStaticPixArrNormalOrientation(
 			str[i], charColor, bgColor, size,
 			hMirror, vMirror, tlX, tlY, pixArrWidth, pixArr);
 
@@ -243,6 +172,33 @@ void Txt_voidCpyStrToStaticPixArr(
 	}
 }
 
+void Txt_voidCpyStrToStaticPixArrRightOrientation(
+	const u8* str, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlXInitial, u8 tlYInitial,
+	u8 pixArrHieght, u8 pixArrWidth, u16 pixArr[][pixArrWidth])
+{
+	u8 tlX = tlXInitial + pixArrWidth - 8;
+	u8 tlY = tlYInitial;
+
+	u8 maxX = tlXInitial + pixArrWidth;
+	u8 maxY = tlYInitial + pixArrHieght;
+
+	for (u16 i = 0; str[i] != '\0'; i++)
+	{
+		Txt_voidCpyCharToStaticPixArrRightOrientation(
+			str[i], charColor, bgColor, size, hMirror, vMirror, tlX, tlY,
+			pixArrWidth, pixArr);
+
+		tlY += 6;
+
+		if (tlY >= maxY)
+		{
+			tlY = tlYInitial;
+			tlX -= 8;
+		}
+	}
+}
 
 
 

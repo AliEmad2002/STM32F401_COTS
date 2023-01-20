@@ -45,25 +45,36 @@ typedef enum{
  * 	- if 'size' equals 2 ==> char will take a rectangle of 10x16 pixels.
  *  And  so on...
  */
-void Txt_voidCpyCharToDynamicPixArr(
+void Txt_voidCpyCharToStaticPixArrNormalOrientation(
 	u8 ch, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
-	u8 tlX, u8 tlY, u16** pixArr);
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
 
-void Txt_voidCpyCharToStaticPixArr(
+void Txt_voidCpyCharToStaticPixArrRightOrientation(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+
+void Txt_voidCpyCharToStaticPixArrLeftOrientation(
+	u8 ch, u16 charColor, u16 bgColor, u8 size,
+	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
+	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
+
+void Txt_voidCpyCharToStaticPixArr180DegreesOrientation(
 	u8 ch, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
 	u8 tlX, u8 tlY, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
 
 /*
- * A function that draws a string on a pixel array. Uses previous two functions
+ * A function that draws a string on a pixel array. Uses previous function
  */
-void Txt_voidCpyStrToDynamicPixArr(
+void Txt_voidCpyStrToStaticPixArrNormalOrientation(
 	const u8* str, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
-	u8 tlXInitial, u8 tlYInitial, u8 pixArrWidth, u16** pixArr);
+	u8 tlXInitial, u8 tlYInitial,
+	u8 pixArrHieght, u8 pixArrWidth, u16 pixArr[][pixArrWidth]);
 
-void Txt_voidCpyStrToStaticPixArr(
+void Txt_voidCpyStrToStaticPixArrRightOrientation(
 	const u8* str, u16 charColor, u16 bgColor, u8 size,
 	Txt_HorizontalMirroring_t hMirror, Txt_VerticalMirroring_t vMirror,
 	u8 tlXInitial, u8 tlYInitial,

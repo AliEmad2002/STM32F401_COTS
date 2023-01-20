@@ -47,7 +47,7 @@ void Menu_voidAddElement(Menu_t* menu, const u8* str, void (*callback)(void))
 }
 
 /*******************************************************************************
- * Selection fucntions:
+ * Selection functions:
  * (do not call callback function. it is just like hovering over a selection,
  * nothing more)
  ******************************************************************************/

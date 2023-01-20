@@ -279,9 +279,17 @@ inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
 {
 	if (DMA_b8IsEnabledChannel(DMA_UnitNumber_1, tftPtr->dmaCh))
 	{
-		while(
-			!DMA_b8ReadFlag(
-				DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete));
+		while(1)
+		{
+			if (DMA_u16GetNumberOfData(DMA_UnitNumber_1, tftPtr->dmaCh) == 0)
+				break;
+
+			if (
+				DMA_b8ReadFlag(
+					DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete))
+				break;
+		}
+
 		DMA_voidClearFlag(
 			DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete);
 		DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);

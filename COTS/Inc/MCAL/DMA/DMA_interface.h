@@ -149,7 +149,7 @@ void DMA_voidSetNumberOfData(
 	const u16 numberOfData);
 
 /*	gets number of data	*/
-u16 DMA_u16GetNumberOfData(
+volatile u16 DMA_u16GetNumberOfData(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*

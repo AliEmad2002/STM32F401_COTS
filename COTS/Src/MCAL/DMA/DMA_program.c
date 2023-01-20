@@ -336,7 +336,7 @@ inline void DMA_voidSetNumberOfData(
 }
 
 /*	gets number of data	*/
-inline u16 DMA_u16GetNumberOfData(
+inline volatile u16 DMA_u16GetNumberOfData(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
 {
 	return DMA[unitNumber]->c[channelNumber].NDTR;

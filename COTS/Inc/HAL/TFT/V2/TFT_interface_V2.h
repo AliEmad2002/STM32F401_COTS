@@ -117,6 +117,20 @@ u16 TFT2_u16GetBrightness(TFT2_t* tftPtr);
 	TFT2_SEND_BYTE((tftPtr), (yEnd));							  \
 }
 
+#define TFT2_SET_PIXEL(tftPtr, x, y, colorU16)			\
+{                                                       \
+	TFT2_SET_Y_BOUNDARIES((tftPtr), (y), (y));          \
+	TFT2_SET_X_BOUNDARIES((tftPtr), (x), (x));          \
+                                                        \
+	/*	start data write operation	*/                  \
+	TFT2_WRITE_CMD((tftPtr), TFT_CMD_MEM_WRITE);        \
+	TFT2_ENTER_DATA_MODE((tftPtr));                     \
+                                                        \
+	/*	send	*/                                      \
+	TFT2_SEND_BYTE((tftPtr), (colorU16) & 0xFF);        \
+	TFT2_SEND_BYTE((tftPtr), (colorU16) >> 8);          \
+}
+
 /*
  * sends pixel data after boundaries are set.
  * (uses DMA)
