@@ -2102,7 +2102,10 @@ inline u16 TIM_u16GetDutyCycleMeasured(const u8 unitNumber)
 {
 	u16 ccr1 = TIM[unitNumber]->CCR1;
 	u16 ccr2 = TIM[unitNumber]->CCR2;
-	return 65535 * (u32)(ccr1 - ccr2) / ccr1;
+	if (ccr1 == 0)
+		return 0;
+	else
+		return 65535 * (u32)(ccr1 - ccr2) / ccr1;
 }
 
 /******************************************************************************
