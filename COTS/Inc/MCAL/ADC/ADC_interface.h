@@ -507,6 +507,10 @@ s16 ADC_s16GetDataInjected(
 /*	reads data of regular conversions	*/
 u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un);
 
+u16 ADC_u16GetDataRegularUnit1(void);
+
+u16 ADC_u16GetDataRegularUnit2(void);
+
 /*
  * reads data of regular conversions in dual mode.
  * ADC1_DR is in the first half word of the returned word.

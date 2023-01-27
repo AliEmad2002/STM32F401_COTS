@@ -149,7 +149,7 @@ void DMA_voidSetNumberOfData(
 	const u16 numberOfData);
 
 /*	gets number of data	*/
-volatile u16 DMA_u16GetNumberOfData(
+u16 DMA_u16GetNumberOfData(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber);
 
 /*
@@ -165,5 +165,11 @@ void DMA_voidSetPeripheralAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
 void DMA_voidSetMemoryAddress(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
 	void* const pointer);
+
+/*	blocks till channel is done transferring data (if any data) and disables
+ * channel
+ */
+void DMA_voidWaitTillChannelIsFreeAndDisableIt(
+	DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber);
 
 #endif /* INCLUDE_MCAL_DMA_DMA_INTERFACE_H_ */

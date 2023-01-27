@@ -613,6 +613,16 @@ inline u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un)
 	return (u16)(ADC[un]->DR);
 }
 
+inline u16 ADC_u16GetDataRegularUnit1(void)
+{
+	return (u16)(ADC[ADC_UnitNumber_1]->DR);
+}
+
+inline u16 ADC_u16GetDataRegularUnit2(void)
+{
+	return (u16)(ADC[ADC_UnitNumber_2]->DR);
+}
+
 /*
  * reads data of regular conversions in dual mode.
  * ADC1_DR is in the first half word of the returned word.

@@ -206,10 +206,6 @@ inline u16 TFT2_u16GetBrightness(TFT2_t* tftPtr)
 void TFT2_voidSendPixels(
 	TFT2_t* const tftPtr, const u16 pixColorArr[], const u16 pixCount)
 {
-	TFT2_WRITE_CMD(tftPtr, TFT_CMD_MEM_WRITE);
-
-	TFT2_ENTER_DATA_MODE(tftPtr);
-
 	/*
 	 * wait for previous operations on DMA channel to be done
 	 * (only if channel was currently enabled)
@@ -277,23 +273,7 @@ void TFT2_voidFillDMA(
 /*	blocks until end of current data block transfer	*/
 inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
 {
-	if (DMA_b8IsEnabledChannel(DMA_UnitNumber_1, tftPtr->dmaCh))
-	{
-		while(1)
-		{
-			if (DMA_u16GetNumberOfData(DMA_UnitNumber_1, tftPtr->dmaCh) == 0)
-				break;
-
-			if (
-				DMA_b8ReadFlag(
-					DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete))
-				break;
-		}
-
-		DMA_voidClearFlag(
-			DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete);
-		DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
-	}
+	DMA_voidWaitTillChannelIsFreeAndDisableIt(DMA_UnitNumber_1, tftPtr->dmaCh);
 }
 
 /*

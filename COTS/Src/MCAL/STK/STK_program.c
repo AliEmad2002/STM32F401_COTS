@@ -188,7 +188,9 @@ u32 STK_u32GetTicksPerSecond(void)
 	#if TARGET_ID == STM32F401x
 	return RCC_u32GetBusClk(RCC_Bus_AHB1) / stkOver8;
 	#elif TARGET_ID == STM32F10x
-	return RCC_u32GetBusClk(RCC_Bus_AHB) / stkOver8;
+	u32 ahbClk = RCC_u32GetBusClk(RCC_Bus_AHB);
+	u32 N = ahbClk/ stkOver8;
+	return N;
 	#endif
 }
 
@@ -196,21 +198,23 @@ u32 STK_u32GetTicksPerSecond(void)
 void SysTick_Handler(void)
 {
 	/* increment ovfCount (if enabled)	*/
-	if (ovfCountEnabled)
-		ovfCount++;
+	ovfCount++;
 
-	/*	only once?	*/
-	if (interruptOnlyOnce)
-	{
-		if (hadExcutedIsr)
-			goto clearingInterruptFlag;
-		else
-			hadExcutedIsr = true;
-	}
-
-	/*	callBack notification	*/
-	if (interruptCallback != NULL)
-		interruptCallback();
+//	if (ovfCountEnabled)
+//		ovfCount++;
+//
+//	/*	only once?	*/
+//	if (interruptOnlyOnce)
+//	{
+//		if (hadExcutedIsr)
+//			goto clearingInterruptFlag;
+//		else
+//			hadExcutedIsr = true;
+//	}
+//
+//	/*	callBack notification	*/
+//	if (interruptCallback != NULL)
+//		interruptCallback();
 
 	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
 	clearingInterruptFlag:

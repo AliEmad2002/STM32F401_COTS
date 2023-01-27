@@ -234,10 +234,10 @@ void DMA_voidDisablePeripheralIncrement(DMA_UnitNumber_t unitNumber, DMA_Channel
 void DMA_voidEnableMemoryIncrement(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
 {
 	/*	range check	*/
-	if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
+	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))
 	{
 		ErrorHandler_voidExecute(DMA_NOT_IN_RANGE_ERR_CODE);
-	}
+	}*/
 
 	SET_BIT(DMA[unitNumber]->c[channelNumber].CR, DMA_CCR_MINC);
 }
@@ -336,7 +336,7 @@ inline void DMA_voidSetNumberOfData(
 }
 
 /*	gets number of data	*/
-inline volatile u16 DMA_u16GetNumberOfData(
+inline u16 DMA_u16GetNumberOfData(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber)
 {
 	return DMA[unitNumber]->c[channelNumber].NDTR;
@@ -372,6 +372,28 @@ inline void DMA_voidSetMemoryAddress(
 	}*/
 
 	DMA[unitNumber]->c[channelNumber].MAR = (u32)pointer;
+}
+
+inline void DMA_voidWaitTillChannelIsFreeAndDisableIt(
+	DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
+{
+	if (DMA_b8IsEnabledChannel(unitNumber, channelNumber))
+	{
+		while(1)
+		{
+			if (DMA_u16GetNumberOfData(unitNumber, channelNumber) == 0)
+				break;
+
+			if (
+				DMA_b8ReadFlag(
+					unitNumber, channelNumber, DMA_Flag_TransferComplete))
+				break;
+		}
+
+		DMA_voidClearFlag(
+			unitNumber, channelNumber, DMA_Flag_TransferComplete);
+		DMA_voidDisableChannel(unitNumber, channelNumber);
+	}
 }
 
 /*	ISR handlers	*/

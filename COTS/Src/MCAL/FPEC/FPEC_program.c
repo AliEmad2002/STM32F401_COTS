@@ -79,8 +79,6 @@ void FPEC_voidDisableProgrammingMode(void)
 void FPEC_voidSelectFlashAccessLatency(FPEC_Latency_t latency)
 {
 	EDT_REG(FPEC->ACR, FPEC_ACR_LATENCY_0, latency, 3);
-	volatile u32 foo = 1;
-	foo++;
 }
 
 /*
