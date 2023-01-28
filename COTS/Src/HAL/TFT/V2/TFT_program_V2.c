@@ -132,7 +132,7 @@ void TFT2_voidInit(
 	 * transistor.
 	 */
 	TIM_u64InitPWM(
-		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 100000);
+		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 50000ul);
 
 	TIM_voidInitOutputPin(bcTimUnitNumber, bcTimChannel, bcTimAFIOMap);
 
@@ -204,7 +204,7 @@ inline u16 TFT2_u16GetBrightness(TFT2_t* tftPtr)
  * - 'pixCount' should be equal to the area of the previously set boundaries.
  */
 void TFT2_voidSendPixels(
-	TFT2_t* const tftPtr, const u16 pixColorArr[], const u16 pixCount)
+	TFT2_t* tftPtr, const u16 pixColorArr[], u16 pixCount)
 {
 	/*
 	 * wait for previous operations on DMA channel to be done
@@ -242,7 +242,7 @@ void TFT2_voidSendPixels(
  * - Data mode must be entered before this function call.
  */
 void TFT2_voidFillDMA(
-	TFT2_t* const tftPtr, const u8* pixColorPtr, const u16 pixCount)
+	TFT2_t* tftPtr, const u8* pixColorPtr, u16 pixCount)
 {
 	if (pixCount == 0)
 		return;
@@ -271,7 +271,7 @@ void TFT2_voidFillDMA(
 }
 
 /*	blocks until end of current data block transfer	*/
-inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
+inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* tftPtr)
 {
 	DMA_voidWaitTillChannelIsFreeAndDisableIt(DMA_UnitNumber_1, tftPtr->dmaCh);
 }
@@ -283,7 +283,7 @@ inline void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr)
  * equal to 162. otherwise, mode may not work properly.
  */
 void TFT2_voidInitScroll(
-	const TFT2_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
+	TFT2_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
 	u8 bottomFixedAreaLen)
 {
 	TFT2_WRITE_CMD(tftPtr, 0x33);
@@ -304,7 +304,7 @@ void TFT2_voidInitScroll(
  * is shown.
  *
  */
-inline void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine)
+inline void TFT2_voidScroll(TFT2_t* tftPtr, u8 startingLine)
 {
 	TFT2_WRITE_CMD(tftPtr, TFT_CMD_SCROLL);
 	TFT2_ENTER_DATA_MODE(tftPtr);
@@ -314,28 +314,28 @@ inline void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine)
 
 /*	sets TFT's corresponding DMA interrupt callback	*/
 inline void TFT2_voidSetDMATransferCompleteCallback(
-	TFT2_t* const tftPtr, void (* callback)(void))
+	TFT2_t* tftPtr, void (* callback)(void))
 {
 	DMA_voidSetInterruptCallback(
 		DMA_UnitNumber_1, tftPtr->dmaCh, callback);
 }
 
 /*	enables TFT's corresponding DMA transfer complete interrupt	*/
-inline void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* const tftPtr)
+inline void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* tftPtr)
 {
 	DMA_voidEnableInterrupt(
 		DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Interrupt_TransferComplete);
 }
 
 /*	clears TFT's corresponding DMA transfer complete flag	*/
-inline void TFT2_voidClearDMATCFlag(TFT2_t* const tftPtr)
+inline void TFT2_voidClearDMATCFlag(TFT2_t* tftPtr)
 {
 	DMA_voidClearFlag(
 		DMA_UnitNumber_1, tftPtr->dmaCh, DMA_Flag_TransferComplete);
 }
 
 /*	disables TFT's corresponding DMA channel	*/
-inline void TFT2_voidDisableDMAChannel(TFT2_t* const tftPtr)
+inline void TFT2_voidDisableDMAChannel(TFT2_t* tftPtr)
 {
 	DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
 }

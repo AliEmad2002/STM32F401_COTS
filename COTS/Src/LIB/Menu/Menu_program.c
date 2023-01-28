@@ -18,14 +18,30 @@
 /*******************************************************************************
  * Init functions:
  ******************************************************************************/
-void Menu_voidInitMenuElement(
+void Menu_voidInitMenuElementAsFunction(
 	Menu_Element_t* menuElement, const u8* str, void (*callback)(void))
 {
 	/*	copy 'str' to 'menuElement->str'	*/
 	strcpy((char*)menuElement->str, (const char*)str);
 
-	/*	copy 'callback' to 'menuElement->callback'	*/
-	menuElement->callback = callback;
+	/*	set type	*/
+	menuElement->type = Menu_ElementType_Callback;
+
+	/*	copy 'callback' to 'menuElement->childPtr'	*/
+	menuElement->childPtr = (void*)callback;
+}
+
+void Menu_voidInitMenuElementAsSubMenu(
+	Menu_Element_t* menuElement, const u8* str, Menu_t* subMenuPtr)
+{
+	/*	copy 'str' to 'menuElement->str'	*/
+	strcpy((char*)menuElement->str, (const char*)str);
+
+	/*	set type	*/
+	menuElement->type = Menu_ElementType_SubMenu;
+
+	/*	copy 'subMenuPtr' to 'menuElement->childPtr'	*/
+	menuElement->childPtr = (void*)subMenuPtr;
 }
 
 void Menu_voidInitMenu(Menu_t* menu)
@@ -33,17 +49,6 @@ void Menu_voidInitMenu(Menu_t* menu)
 	/*	reset counters	*/
 	menu->currentSelected = 0;
 	menu->numberOfElements = 0;
-}
-
-/*******************************************************************************
- * Add / Remove functions:
- ******************************************************************************/
-void Menu_voidAddElement(Menu_t* menu, const u8* str, void (*callback)(void))
-{
-	Menu_Element_t* firstEmptyElementPtr =
-		&menu->elementArr[menu->numberOfElements++];
-
-	Menu_voidInitMenuElement(firstEmptyElementPtr, str, callback);
 }
 
 /*******************************************************************************
@@ -64,7 +69,7 @@ void Menu_voidSelectNextElement(Menu_t* menu)
 		menu->currentSelected = 0;
 }
 
-void Menu_voidSelectPreviousElement(Menu_t* menu)
+inline void Menu_voidSelectPreviousElement(Menu_t* menu)
 {
 	if (menu->currentSelected == 0)
 		menu->currentSelected = menu->numberOfElements - 1;
@@ -74,14 +79,16 @@ void Menu_voidSelectPreviousElement(Menu_t* menu)
 }
 
 /*******************************************************************************
- * Execute menu element callback:
+ * Enter menu element:
  ******************************************************************************/
-void Menu_voidExecuteSelectedElementCallback(Menu_t* menu)
+void Menu_voidEnterSelectedElement(Menu_t* menu)
 {
-	menu->elementArr[menu->currentSelected].callback();
-}
+	Menu_Element_t* selectedElementPtr =
+		&menu->elementArr[menu->currentSelected];
 
-void Menu_voidExecuteElementCallback(Menu_t* menu, u8 numberOfElement)
-{
-	menu->elementArr[numberOfElement].callback();
+	if (selectedElementPtr->type == Menu_ElementType_Callback)
+			((vvFunc_t)selectedElementPtr->childPtr)();
+
+	else
+		MENU_ENTERING_FUNCTION((Menu_t*)selectedElementPtr->childPtr);
 }

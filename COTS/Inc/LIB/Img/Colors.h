@@ -23,6 +23,12 @@ static const Color_t colorWhite = {
 	.map.red = POW_TWO(5) - 1
 };
 
+static const Color_t colorYellow = {
+	.map.blue = 0,
+	.map.green = POW_TWO(6) - 1,
+	.map.red = POW_TWO(5) - 1
+};
+
 static const u8 colorBlackU8Val = 0;
 static const u8 colorGreenU8Val = 0xC;
 static const u8 colorRedU8Val = 0xAA;

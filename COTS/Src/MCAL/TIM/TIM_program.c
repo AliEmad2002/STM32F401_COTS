@@ -2033,7 +2033,7 @@ void TIM_voidInitFreqAndDutyMeasurement(
 		#endif
 	}
 
-	/*	set auto reload register to zero	*/
+	/*	set auto reload register to max	*/
 	TIM[unitNumber]->ARR = (1 << 16) - 1;
 
 	/*
@@ -2088,7 +2088,11 @@ void TIM_voidInitFreqAndDutyMeasurement(
 inline u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber)
 {
 	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
-	return clkIntmHz / TIM[unitNumber]->PSC / TIM[unitNumber]->CCR1;
+	u64 freqmHz = clkIntmHz / TIM[unitNumber]->PSC / TIM[unitNumber]->CCR1;
+	if (freqmHz > 1000000000ul)
+		return 0;
+	else
+		return freqmHz;
 }
 
 /*

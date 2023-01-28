@@ -8,11 +8,32 @@
 #ifndef INCLUDE_LIB_MENU_MENU_INTERFACE_H_
 #define INCLUDE_LIB_MENU_MENU_INTERFACE_H_
 
-typedef struct{
-	u8 str[MENU_MAX_STR_LEN];	// string that expresses the menu elemnt.
+/*
+ * an element of a menu could be just a callback function, or it could be a sub
+ * menu
+ */
+typedef enum{
+	Menu_ElementType_Callback,
+	Menu_ElementType_SubMenu
+}Menu_ElementType_t;
 
-	void (*callback)(void);		// callback function, to be called when men
-								// element is selected.
+typedef struct{
+	u8 str[MENU_MAX_STR_LEN];	// string that expresses the menu element.
+
+	Menu_ElementType_t type;	// type of element.
+								// (see "Menu_ElementType_t" description)
+
+	void* childPtr;				// type of this pointer depends on "type" of the
+								// element.
+								// if "type" was "Menu_ElementType_Callback",
+								// then this "childPtr" is a pointer to a
+								// void function (void) that is to be called
+								// when this element is entered.
+								// otherwise, if "type" was
+								// "Menu_ElementType_SubMenu", then this
+								// "childPtr" is a pointer to the sub menu that
+								// is to be entered when this element is
+								// entered.
 }Menu_Element_t;
 
 typedef struct{
@@ -29,34 +50,28 @@ typedef struct{
 /*******************************************************************************
  * Init functions:
  ******************************************************************************/
-void Menu_voidInitMenuElement(
+void Menu_voidInitMenuElementAsFunction(
 	Menu_Element_t* menuElement, const u8* str, void (*callback)(void));
 
+void Menu_voidInitMenuElementAsSubMenu(
+	Menu_Element_t* menuElement, const u8* str, Menu_t* subMenuPtr);
+
 void Menu_voidInitMenu(Menu_t* menu);
-
-/*******************************************************************************
- * Add / Remove functions:
- ******************************************************************************/
-void Menu_voidAddElement(Menu_t* menu, const u8* str, void (*callback)(void));
-
-void Menu_voidRemoveElement(Menu_t* menu, u8 numberOfElement);
 
 /*******************************************************************************
  * Selection fucntions:
  * (do not call callback function. it is just like hovering over a selection,
  * nothing more)
  ******************************************************************************/
-inline void Menu_voidSelectElement(Menu_t* menu, u8 numberOfElement);
+void Menu_voidSelectElement(Menu_t* menu, u8 numberOfElement);
 
 void Menu_voidSelectNextElement(Menu_t* menu);
 
 void Menu_voidSelectPreviousElement(Menu_t* menu);
 
 /*******************************************************************************
- * Execute menu element callback:
+ * Enter menu element:
  ******************************************************************************/
-inline void Menu_voidExecuteSelectedElementCallback(Menu_t* menu);
-
-inline void Menu_voidExecuteElementCallback(Menu_t* menu, u8 numberOfElement);
+void Menu_voidEnterSelectedElement(Menu_t* menu);
 
 #endif /* INCLUDE_LIB_MENU_MENU_INTERFACE_H_ */

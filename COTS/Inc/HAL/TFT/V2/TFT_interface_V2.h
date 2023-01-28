@@ -138,7 +138,7 @@ u16 TFT2_u16GetBrightness(TFT2_t* tftPtr);
  * - 'pixCount' should be equal to the area of the previously set boundaries.
  */
 void TFT2_voidSendPixels(
-	TFT2_t* const tftPtr, const u16 pixColorArr[], const u16 pixCount);
+	TFT2_t* tftPtr, const u16 pixColorArr[], u16 pixCount);
 
 /*
  * fills area of boundaries that are previously set with one color
@@ -152,10 +152,10 @@ void TFT2_voidSendPixels(
  * - Data mode must be entered before this function call.
  */
 void TFT2_voidFillDMA(
-	TFT2_t* const tftPtr, const u8* pixColorPtr, const u16 pixCount);
+	TFT2_t* tftPtr, const u8* pixColorPtr, u16 pixCount);
 
 /*	blocks until end of current data block transfer	*/
-void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr);
+void TFT2_voidWaitCurrentDataTransfer(TFT2_t* tftPtr);
 
 /*
  * inits vertical scroll mode.
@@ -164,7 +164,7 @@ void TFT2_voidWaitCurrentDataTransfer(TFT2_t* const tftPtr);
  * equal to 162. otherwise, mode may not work properly.
  */
 void TFT2_voidInitScroll(
-	const TFT2_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
+	TFT2_t* tftPtr, u8 topFixedAreaLen, u8 scrollAreaLen,
 	u8 bottomFixedAreaLen);
 
 /*
@@ -176,19 +176,19 @@ void TFT2_voidInitScroll(
  * is shown.
  *
  */
-void TFT2_voidScroll(TFT2_t* const tftPtr, const u8 startingLine);
+void TFT2_voidScroll(TFT2_t* tftPtr, u8 startingLine);
 
 /*	sets TFT's corresponding DMA interrupt callback	*/
 void TFT2_voidSetDMATransferCompleteCallback(
 	TFT2_t* const tftPtr, void (* callback)(void));
 
 /*	enables TFT's corresponding DMA transfer complete interrupt	*/
-void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* const tftPtr);
+void TFT2_voidEnableDMATransferCompleteInterrupt(TFT2_t* tftPtr);
 
 /*	clears TFT's corresponding DMA transfer complete flag	*/
-void TFT2_voidClearDMATCFlag(TFT2_t* const tftPtr);
+void TFT2_voidClearDMATCFlag(TFT2_t* tftPtr);
 
 /*	disables TFT's corresponding DMA channel	*/
-void TFT2_voidDisableDMAChannel(TFT2_t* const tftPtr);
+void TFT2_voidDisableDMAChannel(TFT2_t* tftPtr);
 
 #endif /* INCLUDE_HAL_TFT_V2_TFT_INTERFACE_H_ */
