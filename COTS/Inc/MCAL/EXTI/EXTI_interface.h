@@ -63,4 +63,6 @@ void EXTI_voidMapLine(u8 line, GPIO_PortName_t port);
 
 #define EXTI_CLEAR_FLAG(line)  (SET_BIT(EXTI->PR, (line)))
 
+#define EXTI_GET_FLAG(line)  	(GET_BIT(EXTI->PR, (line)))
+
 #endif /* EXTI_INTERFACE_H_ */

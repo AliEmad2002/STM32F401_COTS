@@ -132,7 +132,7 @@ void TFT2_voidInit(
 	 * transistor.
 	 */
 	TIM_u64InitPWM(
-		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 50000ul);
+		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 500000);
 
 	TIM_voidInitOutputPin(bcTimUnitNumber, bcTimChannel, bcTimAFIOMap);
 
@@ -190,11 +190,11 @@ inline void TFT2_voidSetBrightness(TFT2_t* tftPtr, u16 brightness)
 			(tftPtr)->bcTimUnitNumber, (tftPtr)->bcTimChannel, (brightness));
 }
 
-/*	gets current level of brightness (stored in CCR)	*/
+/*	gets current level of brightness	*/
 inline u16 TFT2_u16GetBrightness(TFT2_t* tftPtr)
 {
-	return TIM_u16GetCCR(
-		tftPtr->bcTimUnitNumber, tftPtr->bcTimChannel);
+	return TIM_u16GetDutyCycle(
+			(tftPtr)->bcTimUnitNumber, (tftPtr)->bcTimChannel);
 }
 
 /*

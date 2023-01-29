@@ -482,6 +482,9 @@ typedef enum{
 /*	returns state of argumented status flag	*/
 b8 TIM_b8GetStatusFlag(u8 unitNumber, TIM_Status_t status);
 
+#define TIM_GET_STATUS_FLAG(unitNumber, status)	\
+	(GET_BIT(TIM[(unitNumber)]->SR, (status)))
+
 /*	clears state of argumented status flag	*/
 void TIM_voidClearStatusFlag(
 	const u8 unitNumber, const TIM_Status_t status);
@@ -770,6 +773,9 @@ u64 TIM_u64SetFreqByChangingPrescaler(const u8 unitNumber, const u64 freqmHz);
  */
 u64 TIM_u64SetFreqByChangingArr(const u8 unitNumber, const u64 freqmHz);
 
+/*	sets frequency by manipulating "ARR" and "prescaler"	*/
+u64 TIM_u64SetFrequency(u8 unitNumber, u64 freqmHz);
+
 /*
  * inits channel as PWM output, configures and connects channel's non inverting
  * GPIO pin.
@@ -806,6 +812,9 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map);
  */
 void TIM_voidSetDutyCycle(
 	const u8 unitNumber, TIM_Channel_t ch, const u16 duty);
+
+u16 TIM_u16GetDutyCycle(
+	const u8 unitNumber, TIM_Channel_t ch);
 
 /*
  * inits and uses timer unit to trigger a user-defined function at a
@@ -854,14 +863,22 @@ u64 TIM_u64InitTimTrigger(
  * t_on = (CCR1 - CCR2) * T_count
  */
 void TIM_voidInitFreqAndDutyMeasurement(
-	const u8 unitNumber, const u8 gpioMap, const u64 freqMin);
+	const u8 unitNumber, const u8 gpioMap, const u64 freqMin, u64* freqMaxPtr,
+	u8* portNumberPtr, u8* pinNumberPtr);
 
 /*
  * gets frequency of the measured signal.
  * signal measurement must be first init by function:
  * "TIM_voidInitFreqAndDutyMeasurement()"
  *
- * Note: return value is in mHz.
+ * Note:
+ * 	- return value is in mHz.
+ * 	- CCR1 is updated only on input signal transition. thus, if the signal was
+ * 	  not changing (i.e.: no transition) reading frequency by reading CCR1 would
+ * 	  by extension give parasitic value.
+ * 	  One way to encounter this problem: is to check the CC1 flag before
+ * 	  reading, as it is set by HW on input signal transition, and cleared by SW
+ * 	  or by by HW on CCR1 read.
  */
 u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber);
 

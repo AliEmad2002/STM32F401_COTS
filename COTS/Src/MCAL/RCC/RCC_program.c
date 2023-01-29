@@ -99,7 +99,7 @@ void RCC_voidSysClockInit(void)
 	u32 abp1Clk = RCC_u32GetBusClk(RCC_Bus_APB1);
 	if (abp1Clk > 36000000)
 	{
-		u8 pre = (u8)(ahbClk / abp1Clk);
+		u8 pre = (u8)(ahbClk / 36000000);
 		if (pre == 1)
 		{
 			/*	set by default	*/

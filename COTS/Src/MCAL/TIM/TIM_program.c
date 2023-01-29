@@ -1701,7 +1701,7 @@ u32 TIM_u32GetClockInternalInput(u8 unitNumber)
 	if (RCC_u16GetBusPrescaler(bus) == 1)
 		return abpFreq;
 	else
-		return 2 * abpFreq;
+		return abpFreq * 2;
 }
 
 /*
@@ -1737,7 +1737,7 @@ u64 TIM_u64SetFreqByChangingPrescaler(const u8 unitNumber, const u64 freqmHz)
 
 	else
 	{
-		TIM[unitNumber]->PSC = prescaler;
+		TIM[unitNumber]->PSC = prescaler - 1;
 		return clkIntmHz / prescaler / arr;
 	}
 }
@@ -1760,7 +1760,7 @@ u64 TIM_u64SetFreqByChangingArr(const u8 unitNumber, const u64 freqmHz)
 	/*
 	 * since: Frequency = clk_int / (ARR * prescaler)
 	 */
-	u16 prescaler = TIM[unitNumber]->PSC;
+	u16 prescaler = TIM[unitNumber]->PSC + 1;
 	u32 arr = clkIntmHz / freqmHz / prescaler;
 
 	if (arr == 0  ||  arr > 65535)
@@ -1774,6 +1774,30 @@ u64 TIM_u64SetFreqByChangingArr(const u8 unitNumber, const u64 freqmHz)
 		TIM[unitNumber]->ARR = arr;
 		return clkIntmHz / prescaler / arr;
 	}
+}
+
+/*	sets frequency by manipulating "ARR" and "prescaler"	*/
+u64 TIM_u64SetFrequency(u8 unitNumber, u64 freqmHz)
+{
+	/*	internal clock in mHz	*/
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+
+	/*
+	 * since: Frequency = clk_int / (ARR * prescaler)
+	 */
+	for (u16 arr = POW_TWO(16) - 1; arr > 1; arr--)
+	{
+		u32 prescaler = (clkIntmHz / freqmHz) / arr;
+		if (prescaler > 0 && prescaler <= POW_TWO(16) - 1)
+		{
+			TIM[unitNumber]->ARR = arr;
+			TIM[unitNumber]->PSC = prescaler - 1;
+			return clkIntmHz / prescaler / arr;
+		}
+	}
+
+	ErrorHandler_voidExecute(0);
+	return 0;
 }
 
 /*
@@ -1792,8 +1816,8 @@ u64 TIM_u64InitPWM(
 	if (IS_ADV_GP_2_TO_5(unitNumber)  ||  IS_GP_9_AND_12(unitNumber))
 		TIM_voidSetSlaveMode(unitNumber, TIM_SlaveMode_Disabled);
 
-	/*	set frequency (prescaler)	*/
-	u64 mHzFreq = TIM_u64SetFreqByChangingPrescaler(unitNumber, freqmHz);
+	/*	set frequency	*/
+	u64 mHzFreq = TIM_u64SetFrequency(unitNumber, freqmHz);
 
 	/*	select up-counting mode	*/
 	if (IS_ADV_GP_2_TO_5(unitNumber))
@@ -1803,7 +1827,7 @@ u64 TIM_u64InitPWM(
 	TIM[unitNumber]->CNT = 0;
 
 	/*	load ARR with maximum value	*/
-	TIM[unitNumber]->ARR = (1 << 16) - 1;
+	//TIM[unitNumber]->ARR = (1 << 16) - 1;
 
 	/*	load repetition counter with zero	*/
 	TIM[unitNumber]->RCR = 0;
@@ -1902,6 +1926,18 @@ inline void TIM_voidSetDutyCycle(
 	(&(TIM[unitNumber]->CCR1))[ch] = duty * (u32)(TIM[unitNumber]->ARR) / 65535;
 }
 
+inline u16 TIM_u16GetDutyCycle(
+	const u8 unitNumber, TIM_Channel_t ch)
+{
+	if (ch > TIM_Channel_2)
+		ch -= 2;
+
+	u32 ccr = (&(TIM[unitNumber]->CCR1))[ch];
+	u32 arr = TIM[unitNumber]->ARR;
+
+	return ccr * 65535 / arr;
+}
+
 /*
  * inits and uses timer unit to trigger a user-defined function at a
  * user-defined changeable rate.
@@ -1996,7 +2032,8 @@ u64 TIM_u64InitTimTrigger(
  * t_on = (CCR1 - CCR2) * T_count
  */
 void TIM_voidInitFreqAndDutyMeasurement(
-	const u8 unitNumber, const u8 gpioMap, const u64 freqMin)
+	const u8 unitNumber, const u8 gpioMap, const u64 freqMin, u64* freqMaxPtr,
+	u8* portNumberPtr, u8* pinNumberPtr)
 {
 	/*	enable RCC clock (if not enabled)	*/
 	TIM_voidEnableTimRCC(unitNumber);
@@ -2016,6 +2053,12 @@ void TIM_voidInitFreqAndDutyMeasurement(
 	{
 		u8 pin = portAndPin & 0x0F;
 		GPIO_PortName_t port = (GPIO_PortName_t)(portAndPin >> 4);
+
+		if (pinNumberPtr != NULL)
+			*pinNumberPtr = pin;
+
+		if (portNumberPtr != NULL)
+			*portNumberPtr = (u8)port;
 
 		GPIO_voidSetPinInputPullDown(port, pin);
 		TIM_u8GetPeripheralIndex(unitNumber);
@@ -2041,6 +2084,14 @@ void TIM_voidInitFreqAndDutyMeasurement(
 	 * 2^16 ticks
 	 */
 	TIM_u64SetFreqByChangingPrescaler(unitNumber, freqMin);
+
+	/*	max measurable freq is at ccr1 = 1	*/
+
+	if (freqMaxPtr != NULL)
+	{
+		u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+		*freqMaxPtr = clkIntmHz / (TIM[unitNumber]->PSC + 1);
+	}
 
 	/*	set counting direction up-counting	*/
 	TIM_voidSetCounterDirection(unitNumber, TIM_CountDirection_Up);
@@ -2083,16 +2134,22 @@ void TIM_voidInitFreqAndDutyMeasurement(
  * signal measurement must be first init by function:
  * "TIM_voidInitFreqAndDutyMeasurement()"
  *
- * Note: return value is in mHz.
+ * Note:
+ * 	- return value is in mHz.
+ * 	- CCR1 is updated only on input signal transition. thus, if the signal was
+ * 	  not changing (i.e.: no transition) reading frequency by reading CCR1 would
+ * 	  by extension give parasitic value.
+ * 	  One way to encounter this problem: is to check the CC1 flag before
+ * 	  reading, as it is set by HW on input signal transition, and cleared by SW
+ * 	  or by by HW on CCR1 read.
  */
 inline u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber)
 {
 	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
-	u64 freqmHz = clkIntmHz / TIM[unitNumber]->PSC / TIM[unitNumber]->CCR1;
-	if (freqmHz > 1000000000ul)
-		return 0;
-	else
-		return freqmHz;
+	u64 freqmHz =
+		clkIntmHz / (TIM[unitNumber]->PSC + 1) / TIM[unitNumber]->CCR1;
+
+	return freqmHz;
 }
 
 /*

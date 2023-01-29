@@ -34,6 +34,8 @@ static b8 hadExcutedIsr = false;
 static u64 ovfCount = 1;	//	instead of adding in "getElapsed()", init 1
 static b8 ovfCountEnabled = false;
 
+volatile u32 stkTicksPerSecond;
+
 /*
  * init only (using params configured in ".config" file, does not enable yet.
  */
@@ -42,6 +44,8 @@ void STK_voidInit(void)
 	WRT_BIT(STK->CTRL, STK_CLKSOURCE, CLK_SOURCE);
 	STK->LOAD = 0;
 	STK->VAL = 0;
+
+	stkTicksPerSecond = STK_u32GetTicksPerSecond();
 }
 
 /*	enable	*/
