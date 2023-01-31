@@ -12,6 +12,7 @@
 
 /*	MCAL	*/
 #include "GPIO_interface.h"
+#include "DMA_interface.h"
 
 /*	SELF	*/
 #include "ADC_private.h"
@@ -365,6 +366,10 @@ inline void ADC_voidEnableSingleConversionMode(ADC_UnitNumber_t un)
 /*	enable DMA	*/
 inline void ADC_voidEnableDMA(ADC_UnitNumber_t un)
 {
+	/*	set source address to be  ADC.DR	*/
+	DMA_voidSetPeripheralAddress(
+		DMA_UnitNumber_1, DMA_ChannelNumber_1, (void*)&ADC[un]->DR);
+
 	SET_BIT(ADC[un]->CR2, CR2_DMA);
 }
 

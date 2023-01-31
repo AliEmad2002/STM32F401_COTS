@@ -36,12 +36,14 @@ typedef struct{
 {															    \
 	while(SPI_GET_FLAG((tftPtr)->spiUnit, SPI_Flag_Busy)); 		\
 	__asm__ volatile("NOP");									\
+	__asm__ volatile("NOP");									\
 	GPIO_SET_PIN_LOW((tftPtr)->A0Port, (tftPtr)->A0Pin);        \
 }
 
 #define TFT2_ENTER_DATA_MODE(tftPtr)						    \
 {															    \
 	while(SPI_GET_FLAG((tftPtr)->spiUnit, SPI_Flag_Busy));	 	\
+	__asm__ volatile("NOP");									\
 	__asm__ volatile("NOP");									\
 	GPIO_SET_PIN_HIGH((tftPtr)->A0Port, (tftPtr)->A0Pin);       \
 }

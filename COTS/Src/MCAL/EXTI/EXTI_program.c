@@ -37,7 +37,7 @@ static void (*EXTI_callback[EXTI_VECTORS_COUNT])(void);
 /*
  * returns vector number of the vector corresponding to the input line event
  */
-u8 EXTI_u8FindVector(u8 line)
+inline u8 EXTI_u8FindVector(u8 line)
 {
 	if (line < 5)
 		return NVIC_Interrupt_EXTI0 + line;
@@ -47,12 +47,12 @@ u8 EXTI_u8FindVector(u8 line)
 		return NVIC_Interrupt_EXTI10To15;
 }
 
-void EXTI_voidEnableLineInterrupt(u8 line)
+inline void EXTI_voidEnableLineInterrupt(u8 line)
 {
 	NVIC_voidEnableInterrupt(EXTI_u8FindVector(line));
 }
 
-void EXTI_voidDisbleLineInterrupt(u8 line)
+inline void EXTI_voidDisbleLineInterrupt(u8 line)
 {
 	NVIC_voidDisableInterrupt(EXTI_u8FindVector(line));
 }

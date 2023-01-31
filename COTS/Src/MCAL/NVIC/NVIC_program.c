@@ -22,12 +22,12 @@
 #include "NVIC_interface.h"
 
 
-void NVIC_voidEnableInterrupt(NVIC_Interrupt_t interrupt)
+inline void NVIC_voidEnableInterrupt(NVIC_Interrupt_t interrupt)
 {
 	NVIC->ISER[interrupt/32] = (1 << interrupt%32);
 }
 
-void NVIC_voidDisableInterrupt(NVIC_Interrupt_t interrupt)
+inline void NVIC_voidDisableInterrupt(NVIC_Interrupt_t interrupt)
 {
 	NVIC->ICER[interrupt/32] = (1 << interrupt%32);
 }

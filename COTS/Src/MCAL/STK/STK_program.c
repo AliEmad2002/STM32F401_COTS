@@ -29,7 +29,7 @@
 static void (*interruptCallback)(void) = NULL;
 
 static b8 interruptOnlyOnce = false;
-static b8 hadExcutedIsr = false;
+//static b8 hadExcutedIsr = false;
 
 static u64 ovfCount = 1;	//	instead of adding in "getElapsed()", init 1
 static b8 ovfCountEnabled = false;
@@ -221,7 +221,7 @@ void SysTick_Handler(void)
 //		interruptCallback();
 
 	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
-	clearingInterruptFlag:
+	//clearingInterruptFlag:
 	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
 }
 

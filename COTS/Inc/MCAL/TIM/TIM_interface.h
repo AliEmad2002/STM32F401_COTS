@@ -489,6 +489,9 @@ b8 TIM_b8GetStatusFlag(u8 unitNumber, TIM_Status_t status);
 void TIM_voidClearStatusFlag(
 	const u8 unitNumber, const TIM_Status_t status);
 
+#define TIM_CLEAR_STATUS_FLAG(unitNumber, status)	\
+	(CLR_BIT(TIM[(unitNumber)]->SR, (status)))
+
 
 /******************************************************************************
  * Capture compare selection.
@@ -560,8 +563,14 @@ void TIM_voidSetLockConfiguration(u8 unitNumber, TIM_LockConfiguration_t lock);
 /*	enable counter	*/
 void TIM_voidEnableCounter(u8 unitNumber);
 
+#define TIM_ENABLE_COUNTER(unitNumber)	\
+	(SET_BIT(TIM[(unitNumber)]->CR1, TIM_CR1_CEN))
+
 /*	disable counter	*/
 void TIM_voidDisableCounter(u8 unitNumber);
+
+#define TIM_DISABLE_COUNTER(unitNumber)	\
+	(CLR_BIT(TIM[(unitNumber)]->CR1, TIM_CR1_CEN))
 
 /*	loads CNT register	*/
 void TIM_voidSetCNT(u8 unitNumber, u16 value);

@@ -1785,19 +1785,36 @@ u64 TIM_u64SetFrequency(u8 unitNumber, u64 freqmHz)
 	/*
 	 * since: Frequency = clk_int / (ARR * prescaler)
 	 */
+	u32 prescalerArrProduct = clkIntmHz / freqmHz;
+
+	u16 arrAtMinErr = 0;
+	u32 minErr = POW_TWO(16) - 1;
+
 	for (u16 arr = POW_TWO(16) - 1; arr > 1; arr--)
 	{
-		u32 prescaler = (clkIntmHz / freqmHz) / arr;
-		if (prescaler > 0 && prescaler <= POW_TWO(16) - 1)
+		u32 err = prescalerArrProduct % arr;
+
+		if (err < minErr)
 		{
-			TIM[unitNumber]->ARR = arr;
-			TIM[unitNumber]->PSC = prescaler - 1;
-			return clkIntmHz / prescaler / arr;
+			minErr = err;
+			arrAtMinErr = arr;
 		}
 	}
 
-	ErrorHandler_voidExecute(0);
-	return 0;
+	u32 prescalerAtMinErr = prescalerArrProduct / arrAtMinErr;
+
+	if (prescalerAtMinErr > 0 && prescalerAtMinErr <= POW_TWO(16) - 1)
+	{
+		TIM[unitNumber]->ARR = arrAtMinErr;
+		TIM[unitNumber]->PSC = prescalerAtMinErr - 1;
+		return clkIntmHz / prescalerAtMinErr / arrAtMinErr;
+	}
+
+	else
+	{
+		ErrorHandler_voidExecute(0);
+		return 0;
+	}
 }
 
 /*

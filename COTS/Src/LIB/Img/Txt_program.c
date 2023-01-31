@@ -113,9 +113,9 @@ void Txt_voidCpyStrToStaticPixArrNormalOrientation(
 		if (str[i] == '\n' || str[i] == '\0')
 		{
 			/*	fill with bgColor till end of the line	*/
-			for (u8 y = tlY; y < tlY + yIncrementer; y++)
+			for (u8 y = tlY; y < tlY + yIncrementer && y < maxY; y++)
 			{
-				for (u8 x = tlX; x < pixArrWidth; x++)
+				for (u8 x = tlX; x < maxX; x++)
 					pixArr[y][x] = bgColor;
 			}
 
