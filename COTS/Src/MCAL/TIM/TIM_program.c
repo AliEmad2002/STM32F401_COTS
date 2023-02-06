@@ -2077,7 +2077,8 @@ void TIM_voidInitFreqAndDutyMeasurement(
 		if (portNumberPtr != NULL)
 			*portNumberPtr = (u8)port;
 
-		GPIO_voidSetPinInputPullDown(port, pin);
+		//GPIO_voidSetPinInputPullDown(port, pin);
+		GPIO_voidSetPinMode(port, pin, GPIO_Mode_Input_Floating);
 		TIM_u8GetPeripheralIndex(unitNumber);
 		GPIO_voidSetPinOutputSpeed(port, pin, GPIO_OutputSpeed_Null);
 

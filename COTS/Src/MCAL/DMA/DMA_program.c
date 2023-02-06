@@ -363,7 +363,7 @@ void DMA_voidSetPeripheralAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
  */
 inline void DMA_voidSetMemoryAddress(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
-	void* const pointer)
+	void* pointer)
 {
 	/*	range check	*/
 	/*if (DMA_NOT_IN_RANGE(unitNumber, channelNumber))

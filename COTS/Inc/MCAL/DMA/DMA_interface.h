@@ -164,7 +164,7 @@ void DMA_voidSetPeripheralAddress(DMA_UnitNumber_t unitNumber, DMA_ChannelNumber
  */
 void DMA_voidSetMemoryAddress(
 	const DMA_UnitNumber_t unitNumber, const DMA_ChannelNumber_t channelNumber,
-	void* const pointer);
+	void* pointer);
 
 /*	blocks till channel is done transferring data (if any data) and disables
  * channel
