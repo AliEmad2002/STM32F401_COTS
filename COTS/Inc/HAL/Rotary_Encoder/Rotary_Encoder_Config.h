@@ -23,7 +23,7 @@ extern void OSC_voidDownButtonCallBack(void);
 
 volatile Rotary_Encoder_t OSC_RotaryEncoder = {
 	.outAPort = GPIO_PortName_B, .outAPin = 0,
-	.outBPort = GPIO_PortName_B, .outBPin = 6,
+	.outBPort = GPIO_PortName_B, .outBPin = 1,
 
 	.countUpCallback = OSC_voidUpButtonCallBack,
 	.countUpCallbackEnabled = true,

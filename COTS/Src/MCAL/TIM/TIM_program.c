@@ -1937,7 +1937,7 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 inline void TIM_voidSetDutyCycle(
 	const u8 unitNumber, TIM_Channel_t ch, const u16 duty)
 {
-	if (ch > TIM_Channel_2)
+ 	if (ch > TIM_Channel_2)
 		ch -= 2;
 
 	(&(TIM[unitNumber]->CCR1))[ch] = duty * (u32)(TIM[unitNumber]->ARR) / 65535;
@@ -2077,15 +2077,16 @@ void TIM_voidInitFreqAndDutyMeasurement(
 		if (portNumberPtr != NULL)
 			*portNumberPtr = (u8)port;
 
-		//GPIO_voidSetPinInputPullDown(port, pin);
-		GPIO_voidSetPinMode(port, pin, GPIO_Mode_Input_Floating);
-		TIM_u8GetPeripheralIndex(unitNumber);
+		GPIO_voidSetPinInputPullDown(port, pin);
+		///GPIO_voidSetPinMode(port, pin, GPIO_Mode_Input_Floating);
 		GPIO_voidSetPinOutputSpeed(port, pin, GPIO_OutputSpeed_Null);
 
 		if (unitNumber == 3)
 			AFIO_voidRemap(AFIO_Peripheral_TIM3, gpioMap);
 		else if (unitNumber == 2)
+		{
 			AFIO_voidRemap(AFIO_Peripheral_TIM2, gpioMap);
+		}
 
 		#if DEBUG_ON == 1
 		trace_printf(

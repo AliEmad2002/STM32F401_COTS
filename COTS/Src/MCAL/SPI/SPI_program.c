@@ -65,6 +65,16 @@ void SPI_voidInit(
 	WRT_BIT(SPI[unitNumber]->CR1, SPI_CR1_CPHA, clockPhase);
 }
 
+void SPI_voidSetBaudRatePrescaler(
+	SPI_UnitNumber_t unitNumber, SPI_Prescaler_t prescaler)
+{
+	/*	wait busy flag to be cleared	*/
+	while(SPI_GET_FLAG(unitNumber, SPI_Flag_Busy));
+
+	/*	write new prescaler	*/
+	EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, prescaler, 3);
+}
+
 /*
  * enables output for any of the two directional modes.
  */

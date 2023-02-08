@@ -122,6 +122,9 @@ void SPI_voidInit(
 		SPI_ClockPhase_t clockPhase
 	);
 
+void SPI_voidSetBaudRatePrescaler(
+	SPI_UnitNumber_t unitNumber, SPI_Prescaler_t prescaler);
+
 /*
  * enables output for any of the two directional modes.
  */

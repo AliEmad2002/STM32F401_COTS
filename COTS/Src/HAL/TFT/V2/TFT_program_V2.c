@@ -132,7 +132,7 @@ void TFT2_voidInit(
 	 * transistor.
 	 */
 	TIM_u64InitPWM(
-		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 20 * 1000 * 1000);
+		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 10 * 1000 * 1000);
 
 	TIM_voidInitOutputPin(bcTimUnitNumber, bcTimChannel, bcTimAFIOMap);
 
