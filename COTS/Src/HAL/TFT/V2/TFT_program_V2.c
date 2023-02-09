@@ -11,6 +11,7 @@
 #include "Delay_interface.h"
 #include "Img_config.h"
 #include "Img_interface.h"
+#include "Colors.h"
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -340,9 +341,22 @@ inline void TFT2_voidDisableDMAChannel(TFT2_t* tftPtr)
 	DMA_voidDisableChannel(DMA_UnitNumber_1, tftPtr->dmaCh);
 }
 
+void TFT2_voidClearDisplay(TFT2_t* tftPtr)
+{
+	/*	set bounds	*/
+	TFT2_SET_X_BOUNDARIES(tftPtr, 0, 127);
+	TFT2_SET_Y_BOUNDARIES(tftPtr, 0, 159);
 
+	/*	start data write operation	*/
+	TFT2_WRITE_CMD(tftPtr, TFT_CMD_MEM_WRITE);
+	TFT2_ENTER_DATA_MODE(tftPtr);
 
+	/*	DMA send	*/
+	TFT2_voidFillDMA(tftPtr, &colorBlackU8Val, 128 * 160);
 
+	/*	wait for DMA to get done and clear flags	*/
+	TFT2_voidWaitCurrentDataTransfer(tftPtr);
+}
 
 
 

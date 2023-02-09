@@ -193,4 +193,7 @@ void TFT2_voidClearDMATCFlag(TFT2_t* tftPtr);
 /*	disables TFT's corresponding DMA channel	*/
 void TFT2_voidDisableDMAChannel(TFT2_t* tftPtr);
 
+/*	fills whole display with black color	*/
+void TFT2_voidClearDisplay(TFT2_t* tftPtr);
+
 #endif /* INCLUDE_HAL_TFT_V2_TFT_INTERFACE_H_ */
