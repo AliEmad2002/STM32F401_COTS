@@ -36,6 +36,11 @@ static b8 ovfCountEnabled = false;
 
 volatile u32 stkTicksPerSecond;
 
+inline u32 STK_u32GetTicksPerSecond(void)
+{
+	return stkTicksPerSecond;
+}
+
 /*
  * init only (using params configured in ".config" file, does not enable yet.
  */
@@ -45,7 +50,7 @@ void STK_voidInit(void)
 	STK->LOAD = 0;
 	STK->VAL = 0;
 
-	stkTicksPerSecond = STK_u32GetTicksPerSecond();
+	STK_voidUpdatetTicksPerSecond();
 }
 
 /*	enable	*/
@@ -185,16 +190,15 @@ b8 STK_b8GetAndClearCountFlag(void)
 	return GET_BIT(STK->CTRL, STK_COUNTFLAG);
 }
 
-u32 STK_u32GetTicksPerSecond(void)
+void STK_voidUpdatetTicksPerSecond(void)
 {
 	/*	ticksPerSecond = F_sys / AHB_prescaler / sysTick_over8	*/
 	u32 stkOver8 = (CLK_SOURCE == STK_CLOCKSOURCE_AHB_BY8) ? 8 : 1;
 	#if TARGET_ID == STM32F401x
-	return RCC_u32GetBusClk(RCC_Bus_AHB1) / stkOver8;
+	stkTicksPerSecond = RCC_u32GetBusClk(RCC_Bus_AHB1) / stkOver8;
 	#elif TARGET_ID == STM32F10x
 	u32 ahbClk = RCC_u32GetBusClk(RCC_Bus_AHB);
-	u32 N = ahbClk/ stkOver8;
-	return N;
+	stkTicksPerSecond = ahbClk/ stkOver8;
 	#endif
 }
 

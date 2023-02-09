@@ -22,6 +22,8 @@ typedef enum{
 	STK_TickMeasureType_OverflowCount	=	1
 }STK_TickMeasureType_t;
 
+u32 STK_u32GetTicksPerSecond(void);
+
 /*
  * init only (using params configured in ".config" file, does not enable yet.
  */
@@ -72,8 +74,11 @@ u64 STK_u64GetElapsedTicks(void);
 /*	notice that countFlag clears to zero once read	*/
 b8 STK_b8GetCountFlag(void);
 
-u32 STK_u32GetTicksPerSecond(void);
+void STK_voidUpdatetTicksPerSecond(void);
 
 b8 STK_b8IsTickDivBy8(void);
+
+/*	sysTick ticks per mS	*/
+#define STK_TICKS_PER_MS			(STK_u32GetTicksPerSecond() / 1000)
 
 #endif /* STK_INTERFACE_H_ */
