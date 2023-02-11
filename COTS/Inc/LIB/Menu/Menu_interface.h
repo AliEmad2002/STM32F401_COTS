@@ -9,36 +9,27 @@
 #define INCLUDE_LIB_MENU_MENU_INTERFACE_H_
 
 /*
- * an element of a menu could be just a callback function, or it could be a sub
- * menu
+ * an element of a menu could be just a callback function, a sub-menu or a check
+ * list.
  */
 typedef enum{
 	Menu_ElementType_Callback,
-	Menu_ElementType_SubMenu
+	Menu_ElementType_SubMenu,
+	Menu_ElementType_CheckList
 }Menu_ElementType_t;
 
 typedef struct{
-	u8 str[MENU_MAX_STR_LEN];	// string that expresses the menu element.
+	char* str;					// String that expresses the menu element.
 
-	Menu_ElementType_t type;	// type of element.
+	Menu_ElementType_t type;	// Type of element.
 								// (see "Menu_ElementType_t" description)
 
-	void* childPtr;				// type of this pointer depends on "type" of the
-								// element.
-								// if "type" was "Menu_ElementType_Callback",
-								// then this "childPtr" is a pointer to a
-								// void function (void) that is to be called
-								// when this element is entered.
-								// otherwise, if "type" was
-								// "Menu_ElementType_SubMenu", then this
-								// "childPtr" is a pointer to the sub menu that
-								// is to be entered when this element is
-								// entered.
+	void* childPtr;				//	pointer to the element.
 }Menu_Element_t;
 
 typedef struct{
 	/*	array of menu elements forming a menu	*/
-	Menu_Element_t elementArr[MENU_MAX_NUMBER_OF_ELEMENTS];
+	Menu_Element_t* elementArr;
 
 	/*	number of menu elements in menu	*/
 	u8 numberOfElements;
@@ -59,7 +50,7 @@ void Menu_voidInitMenuElementAsSubMenu(
 void Menu_voidInitMenu(Menu_t* menu);
 
 /*******************************************************************************
- * Selection fucntions:
+ * Selection functions:
  * (do not call callback function. it is just like hovering over a selection,
  * nothing more)
  ******************************************************************************/

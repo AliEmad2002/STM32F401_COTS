@@ -9,6 +9,7 @@
 #include "Std_Types.h"
 #include "Bit_Math.h"
 #include <string.h>
+#include "Check_List_interface.h"
 
 /*	SELF	*/
 #include "Menu_config.h"
@@ -86,9 +87,18 @@ void Menu_voidEnterSelectedElement(Menu_t* menu)
 	Menu_Element_t* selectedElementPtr =
 		&menu->elementArr[menu->currentSelected];
 
-	if (selectedElementPtr->type == Menu_ElementType_Callback)
-			((vvFunc_t)selectedElementPtr->childPtr)();
+	switch(selectedElementPtr->type)
+	{
+	case Menu_ElementType_Callback:
+		((vvFunc_t)selectedElementPtr->childPtr)();
+		break;
 
-	else
+	case Menu_ElementType_SubMenu:
 		MENU_ENTERING_FUNCTION((Menu_t*)selectedElementPtr->childPtr);
+		break;
+
+	case Menu_ElementType_CheckList:
+		CHECK_LIST_ENTERING_FUNCTION(
+			(Check_List_t*)selectedElementPtr->childPtr);
+	}
 }

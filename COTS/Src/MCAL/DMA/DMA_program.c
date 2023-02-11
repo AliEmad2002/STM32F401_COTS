@@ -374,6 +374,7 @@ inline void DMA_voidSetMemoryAddress(
 	DMA[unitNumber]->c[channelNumber].MAR = (u32)pointer;
 }
 
+//	TODO: make a timeout version
 inline void DMA_voidWaitTillChannelIsFreeAndDisableIt(
 	DMA_UnitNumber_t unitNumber, DMA_ChannelNumber_t channelNumber)
 {

@@ -41,4 +41,38 @@ f32 Math_f32StrToFloat(char* str, s16 start, s16 end);
  */
 b8 Math_b8IsNumber(char* str, u16 start, u16 end);
 
+/*	gets the smaller of two values	*/
+#define GET_SMALLER(a, b)		((a < b) ? a : b)
+
+/*	gets the larger of two values	*/
+#define GET_LARGER(a, b)		((a > b) ? a : b)
+
+/*	if (b < a)	==>>	a = b	*/
+#define WRITE_IF_SMALLER(a, b)	\
+{                               \
+	if ((b) < (a))              \
+		(a) = (b);              \
+}
+
+/*	if (b > a)	==>>	a = b	*/
+#define WRITE_IF_LARGER(a, b)	\
+{                               \
+	if ((b) > (a))              \
+		(a) = (b);              \
+}
+
+#define SORT_VALUES(new, smaller, larger)             \
+{                                                     \
+	if ((new) > (larger))                             \
+	{                                                 \
+		(larger) = (new);                             \
+	}                                                 \
+	                                                  \
+	else if ((new) < (smaller))                       \
+	{                                                 \
+		(smaller) = (new);                            \
+	}                                                 \
+}
+
+
 #endif /* MATH_H_ */

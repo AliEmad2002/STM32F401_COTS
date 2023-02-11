@@ -33,7 +33,7 @@ volatile Rotary_Encoder_t OSC_RotaryEncoder = {
 };
 
 static Rotary_Encoder_t* Rotray_Encoder_PtrArr[NUMBER_OF_ENCODERS] = {
-	&OSC_RotaryEncoder
+	(Rotary_Encoder_t*)&OSC_RotaryEncoder
 };
 
 

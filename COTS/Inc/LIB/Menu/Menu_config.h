@@ -8,12 +8,6 @@
 #ifndef INCLUDE_LIB_MENU_MENU_CONFIG_H_
 #define INCLUDE_LIB_MENU_MENU_CONFIG_H_
 
-/*	max length of the string that represents the menu element	*/
-#define MENU_MAX_STR_LEN						25
-
-/*	max number of menu elements in one menu	*/
-#define MENU_MAX_NUMBER_OF_ELEMENTS				5
-
 /*
  * function that enters a menu.
  * This function MUST be user defined, as menu entering vary.
@@ -27,10 +21,12 @@
  */
 /**	extern this function here:	**/
 extern void OSC_voidOpenMenu();
+extern void OSC_voidOpenCheckList();
 
 /**	define that externed function so that menu_program.c can handle it	**/
 #define MENU_ENTERING_FUNCTION			OSC_voidOpenMenu
 
+#define CHECK_LIST_ENTERING_FUNCTION	OSC_voidOpenCheckList
 
 
 #endif /* INCLUDE_LIB_MENU_MENU_CONFIG_H_ */
