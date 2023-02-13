@@ -11,6 +11,8 @@
 
 s16 MATH_u16Abs (s16 x) ;
 
+f32 MATH_f32Abs (f32 x);
+
 u16 MATH_u16GetNearestIndex (u16 x, u16* arr, u8 arrLen) ;
 
 u16 MATH_u16GetFirstSmallerIndex (u16 x, u16* arr, u8 arrLen) ;

@@ -21,6 +21,11 @@ s16 MATH_u16Abs (s16 x)
 	return (x>0) ? x : -x ;
 }
 
+f32 MATH_f32Abs (f32 x)
+{
+	return (x > 0.0f) ? x : -x ;
+}
+
 u16 MATH_u16GetNearestIndex (u16 x, u16* arr, u8 arrLen)
 {
 	// takes a value x, an array of values, and returns the index of the nearest value to x in that array.

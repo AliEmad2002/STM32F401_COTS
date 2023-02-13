@@ -1914,8 +1914,8 @@ void TIM_voidInitOutputPin(u8 unitNumber, TIM_Channel_t ch, u8 map)
 
 		#if DEBUG_ON == 1
 		trace_printf(
-			"TIM%u, Ch%u channel initialized on port: %u, pin: %u\n as output",
-			unitNumber, ((ch > TIM_Channel_2) ? (ch - 2) : ch),
+			"TIM%u, Ch%u channel initialized on port: %u, pin: %u\n as output\n",
+			unitNumber, ((ch > TIM_Channel_2) ? (ch - 1) : ch),
 			port, pin);
 		#endif
 	}
