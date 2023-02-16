@@ -358,6 +358,25 @@ void TFT2_voidClearDisplay(TFT2_t* tftPtr)
 	TFT2_voidWaitCurrentDataTransfer(tftPtr);
 }
 
+void TFT2_voidDrawLine(TFT2_t* tftPtr, u8 x1, u8 y1, u8 x2, u8 y2, u16 color)
+{
+	u8 dxTotal = abs((s16)x1 - (s16)x2);
+	u8 dyTotal = abs((s16)y1 - (s16)y2);
+
+	s16 x, y, dx, dy;
+
+	if (dyTotal > dxTotal)
+	{
+		if (x1 > x2)
+			dx = -1;
+		else
+			dx = 1;
+
+		dy =
+
+	}
+}
+
 
 
 

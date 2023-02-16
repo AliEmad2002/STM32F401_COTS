@@ -82,8 +82,9 @@ static void init_time_limits(void)
  * checks if certain number of ticks is equal to x microseconds, considering
  * tolerance configured in "IR.config" file.
  */
+/*	(ticks) <= ticks9000usMax	*/
 #define IS_9000US(ticks)	\
-	((ticks9000usMin <= (ticks)  &&  (ticks) <= ticks9000usMax) ? true : false)
+	((ticks9000usMin <= (ticks)  &&  1) ? true : false)
 
 #define IS_4500US(ticks)	\
 	((ticks4500usMin <= (ticks)  &&  (ticks) <= ticks4500usMax) ? true : false)
@@ -128,13 +129,78 @@ static void init_time_limits(void)
 /*
  * look at documentation of "void (*EXTICallback) (void)" in "IR_Receiver_t".
  */
+/*
+ * The next commented section is a test section.
+ */
+//volatile u32 dtArr[200] = {0};
+//static volatile u32 dtCount = 0;
+//volatile u32 currentDt;
+//
+//void IR_TEST(IR_Receiver_t* IR)
+//{
+//	for (u8 i = 0; i < dtCount; i++)
+//	{
+//		currentDt = dtArr[i];
+//		volatile u64 dt = ((u64)dtArr[i] * (u64)STK_TICKS_PER_MS) / 1000;
+//
+//		/*	logic invert current level	*/
+//		IR->level = !IR->level;
+//
+//		if(IS_9000US(dt))
+//		{
+//			IR->recvStat = 1;
+//		}
+//
+//		else if(IS_4500US(dt))//  &&  IR->level == IDLE_LEVEL  &&  IR->recvStat == 1)
+//		{
+//			IR->recvStat = 2;
+//		}
+//
+//		else if(IS_560US(dt))
+//		{
+//			if (IR->level == ACTIVE_LEVEL  &&  IR->recvStat == 2)
+//			{
+//				IR->recvStat = 3;
+//			}
+//			else if (IR->level == IDLE_LEVEL  &&  IR->recvStat == 3)
+//			{
+//				PUSH_BIT(IR, 0);
+//			}
+//			else
+//			{
+//				IR->recvStat = 0;
+//			}
+//		}
+//
+//		else if(IS_1690US(dt)  &&  IR->level == IDLE_LEVEL  &&  IR->recvStat == 3)
+//		{
+//			PUSH_BIT(IR, 1);
+//		}
+//
+//		else if(IS_2250US(dt)  &&  IR->level == IDLE_LEVEL  &&  IR->recvStat == 0)
+//		{
+//			IR->recvStat = 4;
+//		}
+//
+//		else
+//		{
+//			IR->recvStat = 0;
+//			IR->level = IDLE_LEVEL;
+//		}
+//	}
+//}
+
 void IR_voidEXTICallbackTamplate(IR_Receiver_t* IR)
 {
+
 	/*	take timestamp of transition	*/
 	u64 transitionTimeStamp = STK_u64GetElapsedTicks();
 
 	/*	calculate dt	*/
 	u64 dt = transitionTimeStamp - IR->lastTimeStamp;
+//	dtArr[dtCount++] = dt * 1000 / STK_TICKS_PER_MS;
+//	if (dtCount == 200)
+//		dtCount = 0;
 
 	/*	store new timestamp	*/
 	IR->lastTimeStamp = transitionTimeStamp;
@@ -147,9 +213,10 @@ void IR_voidEXTICallbackTamplate(IR_Receiver_t* IR)
 		IR->recvStat = 1;
 	}
 
-	else if(IS_4500US(dt)  &&  IR->level == IDLE_LEVEL  &&  IR->recvStat == 1)
+	else if(IS_4500US(dt))//  &&  IR->level == IDLE_LEVEL  &&  IR->recvStat == 1)
 	{
 		IR->recvStat = 2;
+		IR->level = IDLE_LEVEL;
 	}
 
 	else if(IS_560US(dt))
@@ -218,7 +285,7 @@ void IR_voidInit(
 	IR->bitCounter = 0;
 	IR->data = 0;
 	IR->recvStat = IR_ReceiveStatus_Out;
-	IR->level = IDLE_LEVEL;
+	IR->level = !IDLE_LEVEL;
 
 	/*	init EXTI pin	*/
 	AFIO_voidSetExtiLineSrc(extiLine, port);

@@ -55,6 +55,7 @@ typedef struct{
 /*
  * look at documentation of "void (*EXTICallback) (void)" in "IR_Receiver_t".
  */
+void IR_TEST(IR_Receiver_t* IR);
 void IR_voidEXTICallbackTamplate(IR_Receiver_t* IR);
 
 /*
