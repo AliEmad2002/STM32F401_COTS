@@ -9,7 +9,9 @@
 #ifndef MATH_H_
 #define MATH_H_
 
-s16 MATH_u16Abs (s16 x) ;
+s16 MATH_u16Abs (s16 x);
+
+s64 MATH_s64Abs (s64 x);
 
 f32 MATH_f32Abs (f32 x);
 

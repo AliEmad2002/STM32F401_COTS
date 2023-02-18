@@ -12,6 +12,8 @@
 #include "Img_config.h"
 #include "Img_interface.h"
 #include "Colors.h"
+#include <stdlib.h>
+#include "My_Math.h"
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -133,7 +135,7 @@ void TFT2_voidInit(
 	 * transistor.
 	 */
 	TIM_u64InitPWM(
-		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 80 * 1000 * 1000);
+		bcTimUnitNumber, bcTimChannel, TIM_OutputCompareMode_PWM2, 1 * 200 * 1000);
 
 	TIM_voidInitOutputPin(bcTimUnitNumber, bcTimChannel, bcTimAFIOMap);
 
@@ -360,20 +362,37 @@ void TFT2_voidClearDisplay(TFT2_t* tftPtr)
 
 void TFT2_voidDrawLine(TFT2_t* tftPtr, u8 x1, u8 y1, u8 x2, u8 y2, u16 color)
 {
-	u8 dxTotal = abs((s16)x1 - (s16)x2);
-	u8 dyTotal = abs((s16)y1 - (s16)y2);
+	s16 dxTotal = (s16)x1 - (s16)x2;
+	s16 dyTotal = (s16)y1 - (s16)y2;
 
-	s16 x, y, dx, dy;
-
-	if (dyTotal > dxTotal)
+	/*	to avoid zero division	*/
+	if (dxTotal == 0 && dyTotal == 0)
 	{
-		if (x1 > x2)
-			dx = -1;
-		else
-			dx = 1;
+		TFT2_SET_PIXEL(tftPtr, x1, y1, color);
+		return;
+	}
 
-		dy =
+	/*	Leading axis is the one of most change	*/
+	else if (abs(dxTotal) > abs(dyTotal))
+	{
+		s16 dx = MATH_s16FindSignOf((s32)dxTotal);
 
+		for (s16 x = x1; x != x2; x -= dx)
+		{
+			s16 y = (s16)y1 + ((x - (s16)x1) * dyTotal) / dxTotal;
+			TFT2_SET_PIXEL(tftPtr, x, y, color);
+		}
+	}
+
+	else
+	{
+		s16 dy = MATH_s16FindSignOf((s32)dyTotal);
+
+		for (s16 y = y1; y != y2; y -= dy)
+		{
+			s16 x = (s16)x1 + ((y - (s16)y1) * dxTotal) / dyTotal;
+			TFT2_SET_PIXEL(tftPtr, x, y, color);
+		}
 	}
 }
 
