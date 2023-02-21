@@ -8,7 +8,7 @@
 #ifndef _STACK_CONFIG_H_
 #define _STACK_CONFIG_H_
 
-#define STACK_ENABLE	0
+#define STACK_ENABLE	1
 
 
 #if STACK_ENABLE
