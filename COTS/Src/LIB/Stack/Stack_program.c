@@ -24,6 +24,9 @@ static u16 tailIndex = 0;
 /*	Index of stack's current head	(first object)	*/
 static u16 headIndex = 0;
 
+/*	count of the used space of stack	*/
+static u16 usedCount = 0;
+
 void Stack_voidInit(void)
 {
 	stack = (STACK_TYPE_PTR*)malloc(STACK_MAX_LEN * sizeof(STACK_TYPE_PTR));
@@ -59,17 +62,7 @@ void Stack_voidIncrementTailIndex(void)
 
 u16 Stack_u16GetUsedLen(void)
 {
-	if (headIndex <= tailIndex)
-		return tailIndex - headIndex;
-
-	else
-	{
-		/*	len =
-		 * 			from "head" to "max" 	+
-		 * 			from "0" 	to "tail"
-		 */
-		return (STACK_MAX_LEN - 1 - headIndex) + (tailIndex + 1);
-	}
+	return usedCount;
 }
 
 b8 Stack_b8IsStackFull(void)
@@ -97,6 +90,9 @@ b8 Stack_b8Push(void* ptr)
 	/*	increment "tail"	*/
 	Stack_voidIncrementTailIndex();
 
+	/*	increment data counter 	*/
+	usedCount++;
+
 	return true;
 }
 
@@ -119,6 +115,9 @@ void Stack_ptrPop(void** ptrPtr)
 
 	/*	increment stack's head	*/
 	Stack_voidIncrementHeadIndex();
+
+	/*	decrement data counter 	*/
+	usedCount--;
 }
 
 #endif
