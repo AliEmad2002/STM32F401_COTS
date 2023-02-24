@@ -900,6 +900,9 @@ u64 TIM_u64GetFrequencyMeasured(const u8 unitNumber);
  */
 u16 TIM_u16GetDutyCycleMeasured(const u8 unitNumber);
 
+/*	gets active time of the input signal in nano seconds	*/
+u64 TIM_u16GetActiveTimeNanoSecond(const u8 unitNumber);
+
 /******************************************************************************
  * Advanced 32-bit tick-counter.
  *

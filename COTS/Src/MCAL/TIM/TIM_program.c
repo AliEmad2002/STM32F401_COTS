@@ -2185,8 +2185,29 @@ inline u16 TIM_u16GetDutyCycleMeasured(const u8 unitNumber)
 	if (ccr1 == 0)
 		return 0;
 	else
-		return 65535 * (u32)(ccr1 - ccr2) / ccr1;
+		return 65535 - 65535 * (u32)(ccr1 - ccr2) / ccr1;
 }
+
+u64 TIM_u16GetActiveTimeNanoSecond(const u8 unitNumber)
+{
+	u64 clkIntmHz = 1000 * (u64)TIM_u32GetClockInternalInput(unitNumber);
+
+	u16 ccr1 = TIM[unitNumber]->CCR1;
+	u16 ccr2 = TIM[unitNumber]->CCR2;
+
+	if (ccr1 == 0)
+		return 0;
+	else
+	{
+		u64 fTimermHz = clkIntmHz / (TIM[unitNumber]->PSC + 1);
+
+		u64 activeTimenS = ((u64)ccr2 * 1e12) / fTimermHz;
+
+		return activeTimenS;
+	}
+}
+
+
 
 /******************************************************************************
  * Advanced 32-bit tick-counter.
