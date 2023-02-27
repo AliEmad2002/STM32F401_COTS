@@ -12,6 +12,7 @@
 #ifndef _UART_INTERFACE_H_
 #define _UART_INTERFACE_H_
 
+#include "UART_config.h"
 
 typedef enum{
 	UART_OverSamplingMode_by16,
@@ -56,7 +57,7 @@ typedef enum{
 typedef enum{
 	UART_UnitNumber_1,
 	UART_UnitNumber_2,
-	UART_UnitNumber_3
+	//UART_UnitNumber_3
 	//UART_UnitNumber_4,
 	//UART_UnitNumber_5
 }UART_UnitNumber_t;
@@ -79,6 +80,10 @@ void UART_voidInit(
 	u32 baudRate, b8 RxEn, b8 TxEn, UART_WordLength_t wordLen,
 	UART_StopBits_t stopBits
 	);
+
+b8 UART_b8IsRccClockEnabled(UART_UnitNumber_t UARTn);
+
+void UART_voidEnableRccClock(UART_UnitNumber_t UARTn);
 
 void UART_voidFastInit(UART_UnitNumber_t UARTn, u32 baudRate, u8 map);
 
@@ -138,5 +143,13 @@ void UART_voidDisableHalfDuplex(UART_UnitNumber_t UARTn);
 void UART_voidEnableNoiseSelectionFlag(UART_UnitNumber_t UARTn);
 
 void UART_voidDisableNoiseSelectionFlag(UART_UnitNumber_t UARTn);
+
+typedef struct{
+	char str[UART_MAX_BUFFER_STR_LEN];
+	u8 len;
+	b8 isCompleted;
+}UART_Buffer_t;
+
+void UART_voidInitBuffer(UART_Buffer_t* bufPtr);
 
 #endif /* _UART_INTERFACE_H_ */
