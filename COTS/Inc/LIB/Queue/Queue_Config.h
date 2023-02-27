@@ -5,12 +5,16 @@
  *      Author: Ali Emad
  *
  * Notice: every "Queue_t" object has a fixed length array of pointers, each
- * that are allocated and freed (dynamically and statically) using two user
+ * of them is allocated and freed (dynamically and statically) using two user
  * defined functions. Which depend on type of the data.
  */
 
 #ifndef INC_DATA_STRUCTURES_QUEUE_QUEUE_CONFIG_H_
 #define INC_DATA_STRUCTURES_QUEUE_QUEUE_CONFIG_H_
+
+#define ENABLE_QUEUE			0
+
+#if ENABLE_QUEUE
 
 /**
  * Maximum length of a queue object.
@@ -70,5 +74,7 @@ typedef QUEUE_DATA_TYPE	Queue_Data_t;
 //extern void printData (s32* dPtr);
 //
 //#define QUEUE_PRINT_ELEMENT		printData
+
+#endif	/*	ENABLE_QUEUE	*/
 
 #endif /* INC_DATA_STRUCTURES_QUEUE_QUEUE_CONFIG_H_ */

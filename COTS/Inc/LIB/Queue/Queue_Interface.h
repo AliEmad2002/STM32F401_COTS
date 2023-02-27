@@ -5,7 +5,7 @@
  *      Author: Ali Emad
  *
  * Notice: every "Queue_t" object has a fixed length array of pointers, each
- * that are allocated and freed (dynamically and statically) using two user
+ * of them is allocated and freed (dynamically and statically) using two user
  * defined functions. Which depend on type of the data.
  */
 
@@ -13,6 +13,8 @@
 #define INC_DATA_STRUCTURES_QUEUE_QUEUE_INTERFACE_H_
 
 #include "Queue_Config.h"
+
+#if ENABLE_QUEUE
 
 typedef struct{
 	/*	array of pointers in which data would be allocated	*/
@@ -80,7 +82,7 @@ b8 Queue_b8Pop(Queue_t* q, Queue_Data_t** dataPP);
 // ******************************************************************************/
 //void Queue_voidPrint(Queue_t* q);
 
-
+#endif	/*	ENABLE_QUEUE	*/
 
 #endif /* INC_DATA_STRUCTURES_QUEUE_QUEUE_INTERFACE_H_ */
 
