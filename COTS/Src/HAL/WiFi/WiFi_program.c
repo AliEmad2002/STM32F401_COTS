@@ -30,37 +30,52 @@
 #include "WiFi_cmd.h"
 
 
-
+/*******************************************************************************
+ *	Init:
+ ******************************************************************************/
 void WiFi_voidInit(
 	WiFi_t* module, GPIO_Pin_t rstPin,
 	UART_UnitNumber_t uartUnitNumber, u32 baudrate, u8 uartAfioMap)
 {
-	module->rstPort = rstPin / 16;
-	module->rstPin = rstPin % 16;
-	GPIO_voidSetPinGpoPushPull(module->rstPort, module->rstPin);
-	GPIO_voidSetPinOutputLevel(
-		module->rstPort, module->rstPin, GPIO_OutputLevel_High);
+	/**	Init UART	**/
+	UART_voidFastInit(uartUnitNumber, baudrate, uartAfioMap);
 
 	module->uartUnitNumber = uartUnitNumber;
 
-	UART_voidFastInit(uartUnitNumber, baudrate, uartAfioMap);
+	/**	Init reset pin (GPIO)	**/
+	module->rstPort = rstPin / 16;
+
+	module->rstPin = rstPin % 16;
+
+	GPIO_voidSetPinGpoPushPull(module->rstPort, module->rstPin);
+
+	/*	as pin is active low, set normally high	*/
+	GPIO_voidSetPinOutputLevel(
+		module->rstPort, module->rstPin, GPIO_OutputLevel_High);
 }
 
+/*******************************************************************************
+ *	Reset:
+ ******************************************************************************/
 b8 WiFi_b8HardReset(WiFi_t* module)
 {
+	/*	1 - second pulse on rst pin	*/
 	GPIO_voidSetPinOutputLevel(module->rstPort, module->rstPin, GPIO_OutputLevel_Low);
+
 	Delay_voidBlockingDelayMs(1000);
+
 	GPIO_voidSetPinOutputLevel(module->rstPort, module->rstPin, GPIO_OutputLevel_High);
 
-	char str[WIFI_MAX_RESPONSE_LEN];
-	b8 ok = UART_b8ReceiveStringTimeout(module->uartUnitNumber, str, 5000, "ready");
+	/*	check for success	*/
+	b8 resetSuccessful = UART_b8ReceiveStringTimeout(
+		module->uartUnitNumber, module->buffer, 5000, "ready");
 
-	#if DEBUG_ON
-	if (ok)
-		trace_printf("Hard reset success\n");
-	#endif
+	return resetSuccessful;
+}
 
-	return ok;
+b8 WiFi_b8SoftReset(WiFi_t* module)
+{
+
 }
 
 void WiFi_voidEnter(WiFi_t* module)

@@ -29,8 +29,8 @@
 
 /*	SELF	*/
 #include "UART_private.h"
-#include "UART_interface.h"
 #include "UART_config.h"
+#include "UART_interface.h"
 
 
 #ifndef NULL
@@ -134,8 +134,50 @@ void UART_voidInit(
 	UART_voidUSARTEnable(UARTn);
 }
 
+void UART_voidGetRccConnection(
+	UART_UnitNumber_t UARTn, RCC_Bus_t* busPtr, u8* peripheralIndexPtr)
+{
+	if (UARTn == UART_UnitNumber_1)
+	{
+		*busPtr = RCC_Bus_APB2;
+		*peripheralIndexPtr = RCC_PERIPHERAL_USART1;
+	}
+
+	else //if (UARTn == UART_UnitNumber_2)
+	{
+		*busPtr = RCC_Bus_APB1;
+		*peripheralIndexPtr = RCC_PERIPHERAL_USART2;
+	}
+}
+
+b8 UART_b8IsRccClockEnabled(UART_UnitNumber_t UARTn)
+{
+	RCC_Bus_t bus;
+	u8 peripheralIndex;
+
+	UART_voidGetRccConnection(UARTn, &bus, &peripheralIndex);
+
+	return RCC_b8IsPeripheralEnabled(bus, peripheralIndex);
+}
+
+void UART_voidEnableRccClock(UART_UnitNumber_t UARTn)
+{
+	RCC_Bus_t bus;
+	u8 peripheralIndex;
+
+	UART_voidGetRccConnection(UARTn, &bus, &peripheralIndex);
+
+	RCC_voidEnablePeripheralClk(bus, peripheralIndex);
+}
+
 void UART_voidFastInit(UART_UnitNumber_t UARTn, u32 baudRate, u8 map)
 {
+	/*	if RCC clock was not enabled, enable it	*/
+	if (!UART_b8IsRccClockEnabled(UARTn))
+	{
+		UART_voidEnableRccClock(UARTn);
+	}
+
 	UART_voidInit(
 		UARTn,
 		#if TARGET_ID == STM32F401x
@@ -466,6 +508,12 @@ void  UART_voidSetCallBack(UART_UnitNumber_t UARTn, UART_Interrupt_t interrupt, 
 		callBacksArr[UARTn].ORE = callBack;
 		break;
 	}
+}
+
+void UART_voidInitBuffer(UART_Buffer_t* bufPtr)
+{
+	bufPtr->isCompleted = false;
+	bufPtr->len = 0;
 }
 
 void USART1_IRQHandler(void)
