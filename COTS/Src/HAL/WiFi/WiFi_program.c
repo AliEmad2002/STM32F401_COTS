@@ -29,6 +29,70 @@
 #include "WiFi_config.h"
 #include "WiFi_cmd.h"
 
+/*******************************************************************************
+ *	Command entering:
+ ******************************************************************************/
+b8 WiFi_b8SendCommand(
+	WiFi_t* module,
+	char* cmd,
+	char* paramArr[],
+	WiFi_Parameter_t paramTypeArr[], u8 nParams,
+	char* successResponse, u16 msTimeout
+)
+{
+	/*	flush parasitic remaining data byte	*/
+	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
+
+	/*	send command (this one has no header)	*/
+	UART_voidSendStringEcho(module->uartUnitNumber, cmd);
+
+	/*	if number of parameters is not zero, send them	*/
+	if (nParams != 0)
+	{
+		/*	send '=' right after command	*/
+		UART_voidSendByteEcho(module->uartUnitNumber, '=');
+
+		WiFi_Parameter_t type;
+
+		for (u8 i = 0; i < nParams; i++)
+		{
+			type = paramTypeArr[i];
+
+			/*	guard the parameter with double quotes if its type was "string"	*/
+			if (type == WiFi_Parameter_String)
+				UART_voidSendByteEcho(module->uartUnitNumber, '\"');
+
+			UART_voidSendStringEcho(module->uartUnitNumber, paramArr[i]);
+
+			/*	guard the parameter with double quotes if its type was "string"	*/
+			if (type == WiFi_Parameter_String)
+				UART_voidSendByteEcho(module->uartUnitNumber, '\"');
+
+			/*
+			 * as long ass this parameter is not the last one, send ',' to
+			 * separate from next parameter
+			 */
+			if (i != nParams - 1)
+				UART_voidSendByteEcho(module->uartUnitNumber, ',');
+		}
+	}
+
+	/*	enter	*/
+	WiFi_voidEnter(module);
+
+	/*	check for success	*/
+	b8 cmdSuccessful = UART_b8ReceiveStringTimeout(
+		module->uartUnitNumber, module->buffer, msTimeout, successResponse);
+
+	/*	return check status	*/
+	return cmdSuccessful;
+}
+
+void WiFi_voidEnter(WiFi_t* module)
+{
+	UART_voidSendByteEcho(module->uartUnitNumber, '\r');
+	UART_enumSendByte(module->uartUnitNumber, '\n');
+}
 
 /*******************************************************************************
  *	Init:
@@ -55,6 +119,16 @@ void WiFi_voidInit(
 }
 
 /*******************************************************************************
+ *	Module availability:
+ ******************************************************************************/
+b8 WiFi_b8IsModuleAvailable(WiFi_t* module)
+{
+	return WiFi_b8SendCommand(
+		module, "AT", NULL, NULL, 0, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+/*******************************************************************************
  *	Reset:
  ******************************************************************************/
 b8 WiFi_b8HardReset(WiFi_t* module)
@@ -68,21 +142,226 @@ b8 WiFi_b8HardReset(WiFi_t* module)
 
 	/*	check for success	*/
 	b8 resetSuccessful = UART_b8ReceiveStringTimeout(
-		module->uartUnitNumber, module->buffer, 5000, "ready");
+		module->uartUnitNumber, module->buffer,
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS, "ready");
 
+	/*	return status	*/
 	return resetSuccessful;
 }
 
 b8 WiFi_b8SoftReset(WiFi_t* module)
 {
-
+	return WiFi_b8SendCommand(
+		module, "AT+RST", NULL, NULL, 0, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
 }
 
-void WiFi_voidEnter(WiFi_t* module)
+b8 WiFi_b8FactoryReset(WiFi_t* module)
 {
-	UART_voidSendByteEcho(module->uartUnitNumber, '\r');
-	UART_enumSendByte(module->uartUnitNumber, '\n');
+	return WiFi_b8SendCommand(
+		module, "AT+RESTORE", NULL, NULL, 0, "ready",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
 }
+
+/*******************************************************************************
+ *	RF antenna voltage:
+ ******************************************************************************/
+b8 WiFi_b8SetRfVdd(WiFi_t* module, u16 voltageMultipliedBy1000)
+{
+	/*	prepare paramArr	*/
+	char paramStr[WIFI_MAX_PARAM_LEN];
+	sprintf(paramStr, "%u", (u32)voltageMultipliedBy1000);
+
+	char* paramArr[] = {paramStr};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_Numerical};
+
+	/*	enter command	*/
+	return WiFi_b8SendCommand(
+		module, "AT+RFVDD", paramArr, paramTypeArr, 1, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+/*******************************************************************************
+ *	WiFi:
+ ******************************************************************************/
+b8 WiFi_b8SelectMode(WiFi_t* module, WiFi_Mode_t mode, b8 storeInFlash)
+{
+	/*	prepare paramArr	*/
+	char paramStr[2];
+	paramStr[0] = '0' + mode;
+	paramStr[1] = '\0';
+
+	char* paramArr[] = {paramStr};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_Numerical};
+
+	/*	enter command	*/
+	const char cmdDef[] = "AT+CWMODE_DEF";
+	const char cmdCur[] = "AT+CWMODE_CUR";
+
+	char* cmd = (char*)(storeInFlash ? cmdDef : cmdCur);
+
+	return WiFi_b8SendCommand(
+		module, cmd, paramArr, paramTypeArr, 1, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8ConnectToAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
+{
+	/*	prepare paramArr	*/
+	char* paramArr[] = {SSID, pass};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {
+		WiFi_Parameter_String, WiFi_Parameter_String};
+
+	/*	enter command	*/
+	const char cmdDef[] = "AT+CWJAP_DEF";
+	const char cmdCur[] = "AT+CWJAP_CUR";
+
+	char* cmd = (char*)(storeInFlash ? cmdDef : cmdCur);
+
+	return WiFi_b8SendCommand(
+		module, cmd, paramArr, paramTypeArr, 2, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8CreateAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
+{
+	/*	prepare paramArr	*/
+	char* paramArr[] = {SSID, pass};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {
+		WiFi_Parameter_String, WiFi_Parameter_String};
+
+	/*	enter command	*/
+	const char cmdDef[] = "AT+CWSAP_DEF";
+	const char cmdCur[] = "AT+CWSAP_CUR";
+
+	char* cmd = (char*)(storeInFlash ? cmdDef : cmdCur);
+
+	return WiFi_b8SendCommand(
+		module, cmd, paramArr, paramTypeArr, 2, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8SetIP(
+	WiFi_t* module, char* ip, char* gateway, char* netmask, b8 storeInFlash)
+{
+	/*	prepare paramArr	*/
+	char* paramArr[] = {ip, gateway, netmask};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {
+		WiFi_Parameter_String, WiFi_Parameter_String, WiFi_Parameter_String};
+
+	/*	enter command	*/
+	const char cmdDef[] = "AT+CIPSTA_DEF";
+	const char cmdCur[] = "AT+CIPSTA_CUR";
+
+	char* cmd = (char*)(storeInFlash ? cmdDef : cmdCur);
+
+	return WiFi_b8SendCommand(
+		module, cmd, paramArr, paramTypeArr, 3, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+/*******************************************************************************
+ *	TCP (and UDP):
+ ******************************************************************************/
+//b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s)	//TODO
+//{
+//
+//}
+
+b8 WiFi_b8GetIpFromDns(WiFi_t* module, char* domainStr)
+{
+	/*	prepare paramArr	*/
+	char* paramArr[] = {domainStr};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_String};
+
+	/*	enter command	*/
+	/*
+	 * TODO: try it. what does sit terminate with? it is not 'OK'.
+	 */
+	return WiFi_b8SendCommand(
+		module, "AT+CIPDOMAIN", paramArr, paramTypeArr, 1, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8SetMultipleConnections(WiFi_t* module, b8 state)
+{
+	/*	prepare paramArr	*/
+	char paramStr[2];
+	paramStr[0] = '0' + state;
+	paramStr[1] = '\0';
+
+	char* paramArr[] = {paramStr};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_Numerical};
+
+	/*	enter command	*/
+	return WiFi_b8SendCommand(
+		module, "AT+CIPMUX", paramArr, paramTypeArr, 1, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8ConnectToTcpSingleConnection(
+	WiFi_t* module, char* address, char* port)
+{
+	/*	prepare paramArr	*/
+	char* paramArr[] = {"TCP", address, port};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {
+		WiFi_Parameter_String, WiFi_Parameter_String, WiFi_Parameter_Numerical};
+
+	/*	enter command	*/
+	return WiFi_b8SendCommand(
+		module, "AT+CIPSTART", paramArr, paramTypeArr, 3, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+b8 WiFi_b8ConnectToTcpMultipleConnections(
+	WiFi_t* module, u8 linkId, char* address, char* port)
+{
+	/*	prepare paramArr	*/
+	char linkIdStr[2];
+	linkIdStr[0] = '0' + linkId;
+	linkIdStr[1] = '\0';
+
+	char* paramArr[] = {linkIdStr, "TCP", address, port};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {
+		WiFi_Parameter_Numerical, WiFi_Parameter_String,
+		WiFi_Parameter_String, WiFi_Parameter_Numerical
+	};
+
+	/*	enter command	*/
+	return WiFi_b8SendCommand(
+		module, "AT+CIPSTART", paramArr, paramTypeArr, 4, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
+//void WiFi_voidWaitLastSendToBeDone(WiFi_t* module)
+//{
+//	//	TODO
+//}
+
+
+
+
+
+
+
 
 b8 WiFi_b8ValidateJustExecuted(WiFi_t* module, u32 timeout)
 {
@@ -93,119 +372,12 @@ b8 WiFi_b8ValidateJustExecuted(WiFi_t* module, u32 timeout)
 	return ok;
 }
 
-b8 WiFi_b8SelectMode(WiFi_t* module, WiFi_Mode_t mode, b8 storeInFlash)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
 
-	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_WIFI_CMD_HEADER);
 
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_MODE);
 
-	/*	send command storing type	*/
-	if (storeInFlash == true)
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_FLASH);
-	else
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_RAM);
-
-	/*	send command param	*/
-	UART_voidSendByteEcho(module->uartUnitNumber, '=');
-	UART_voidSendByteEcho(module->uartUnitNumber, '0' + mode);
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 2000);
-
-	#if DEBUG_ON
-	if (valid)
-		trace_printf("select mode success\n");
-	#endif
-
-	return valid;
-}
-
-b8 WiFi_b8ConnectToAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_WIFI_CMD_HEADER);
-
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CONNECT_AP);
-
-	/*	send command storing type	*/
-	if (storeInFlash == true)
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_FLASH);
-	else
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_RAM);
-
-	/*	send command params	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, "=\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, SSID);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, pass);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\"");
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 5000);
-
-	#if DEBUG_ON
-	if (valid)
-		trace_printf("connect to AP success\n");
-	#endif
-
-	return valid;
-}
-
-b8 WiFi_b8CreateAP(WiFi_t* module, char* SSID, char* pass, b8 storeInFlash)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_WIFI_CMD_HEADER);
-
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_CREATE_AP);
-
-	/*	send command storing type	*/
-	if (storeInFlash == true)
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_FLASH);
-	else
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_RAM);
-
-	/*	send command params	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, "=\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, SSID);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, pass);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",5,3");
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
-
-	#if DEBUG_ON
-	if (valid)
-		trace_printf("created AP success\n");
-	#endif
-
-	return valid;
-}
 
 b8 WiFi_b8SelectMultipleConnections(
-	WiFi_t* module, WiFi_MultiplieConnection_t mode)
+	WiFi_t* module, b8 mode)
 {
 	/*	flush parasitic remaining data byte	*/
 	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
@@ -430,85 +602,6 @@ u64 WiFi_u64TCPMeasureTime(WiFi_t* module, u8 byte, u8 linkId)
 		return tElapsed;
 	else
 		return 0;
-}
-
-/*	TCP server must be initially created	*/
-u16 WiFi_u16ReadStringTCP(WiFi_t* module, char* str, u8* senderId)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	char headerStr[20];
-
-	/*	receive header string (until ':')	*/
-	(void)UART_u16ReadString(module->uartUnitNumber, headerStr, ':', 1);
-
-	/*	extract senderId	*/
-	u8 firstColonIndex = String_s16Find(headerStr, ',', 0);
-	*senderId = headerStr[firstColonIndex + 1] - '0';
-
-	/*	extract payload length from the header	*/
-	u16 payloadLen = atoi(&headerStr[firstColonIndex + 3]);
-
-	/*	receive payload	*/
-	for (u16 i = 0; i < payloadLen; i++)
-	{
-		UART_enumReciveByte(module->uartUnitNumber, str + i);
-	}
-	str[payloadLen] = '\0';
-
-	return payloadLen;
-}
-
-b8 WiFi_b8SetIP(WiFi_t* module, char* ip, char* gateway, char* netmask, b8 storeInFlash)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	/*	send command class header	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_IP_CMD_HEADER);
-
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, WIFI_SET_IP);
-
-	/*	send command storing type	*/
-	if (storeInFlash == true)
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_FLASH);
-	else
-		UART_voidSendStringEcho(module->uartUnitNumber, WIFI_STORE_IN_RAM);
-
-	/*	send command params	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, "=\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, ip);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, gateway);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\",\"");
-	UART_voidSendStringEcho(module->uartUnitNumber, netmask);
-	UART_voidSendStringEcho(module->uartUnitNumber, "\"");
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	validate execution	*/
-	b8 valid = WiFi_b8ValidateJustExecuted(module, 10000);
-	return valid;
-}
-
-b8 WiFi_b8FactoryReset(WiFi_t* module)
-{
-	/*	flush parasitic remaining data byte	*/
-	UART_voidFlushDataReceiveRegister(module->uartUnitNumber);
-
-	/*	send command	*/
-	UART_voidSendStringEcho(module->uartUnitNumber, " AT+RESTORE");
-
-	/*	enter command	*/
-	WiFi_voidEnter(module);
-
-	/*	wait for "ready"	*/
-	char str[WIFI_MAX_RESPONSE_LEN];
-	b8 ok = UART_b8ReceiveStringTimeout(module->uartUnitNumber, str, 5000, "ready");
-	return ok;
 }
 
 

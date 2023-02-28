@@ -18,9 +18,15 @@
 
 #include "WiFi_config.h"
 
+typedef enum{
+	WiFi_Parameter_String,
+	WiFi_Parameter_Numerical
+}WiFi_Parameter_t;
+
 typedef struct{
 	GPIO_PortName_t 	rstPort;
 	u8 					rstPin;
+
 	UART_UnitNumber_t	uartUnitNumber;
 	char				buffer[WIFI_MAX_RESPONSE_LEN];
 }WiFi_t;
@@ -49,6 +55,17 @@ typedef struct{
 void WiFi_voidInit(
 	WiFi_t* module, GPIO_Pin_t rstPin,
 	UART_UnitNumber_t uartUnitNumber, u32 baudrate, u8 uartAfioMap);
+
+/*******************************************************************************
+ *	Module availability:
+ ******************************************************************************/
+/*
+ * Checks availability of module.
+ *
+ * Notice: can't be used while module is performing an operation, like: connecting
+ * to WiFi AP, sending TCP segment, etc.
+ */
+b8 WiFi_b8IsModuleAvailable(WiFi_t* module);
 
 /*******************************************************************************
  *	Reset:
@@ -105,27 +122,22 @@ b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s);
 /*
  * Gets IP address of a given string domain using DNS. Must be connected to the
  * Internet first.
+ *
+ * Output may be read in: "module->buffer"
  */
 b8 WiFi_b8GetIpFromDns(WiFi_t* module, char* domainStr);
 
 /*	enables / disables multiple TCP connections	*/
-b8 WiFi_b8EnableMultipleConnections(WiFi_t* module);
-
-b8 WiFi_b8DisableMultipleConnections(WiFi_t* module);
+b8 WiFi_b8SetMultipleConnections(WiFi_t* module, b8 state);
 
 /*
  * Connects to TCP server.
- *
- * "linkId" is ignored if multiple connections was not enabled.
  */
-b8 WiFi_b8ConnectToTCP(WiFi_t* module, char* address, char* port, u8 linkId);
+b8 WiFi_b8ConnectToTcpSingleConnection(
+	WiFi_t* module, char* address, char* port);
 
-/*
- * Connects to UDP server.
- *
- * "linkId" is ignored if multiple connections was not enabled.
- */
-b8 WiFi_b8ConnectToUDP(WiFi_t* module, char* address, char* port, u8 linkId);
+b8 WiFi_b8ConnectToTcpMultipleConnections(
+	WiFi_t* module, u8 linkId, char* address, char* port);
 
 /*
  * Waits for TCP send operation to be done.
