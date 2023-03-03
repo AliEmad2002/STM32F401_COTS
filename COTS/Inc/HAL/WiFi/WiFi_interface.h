@@ -46,6 +46,11 @@ typedef struct{
 
 }WiFi_Status_t;
 
+typedef enum{
+	WiFi_FtpFile_Ascii,
+	WiFi_FtpFile_Binary
+}WiFi_FtpFile_t;
+
 /*******************************************************************************
  *	Init:
  ******************************************************************************/
@@ -209,8 +214,39 @@ b8 WiFi_b8Ping(WiFi_t* module, char* domainStr, u16* msTimeoutPtr);
 b8 WiFi_b8ConnectToFTP(
 	WiFi_t* module, char* ip, char* port, char* user, char* pass, u8 cmdlinkId);
 
-/*	Downloads small file from FTP server (stored in "module"'s "buffer"	*/
-b8 WiFi_b8DownloadSmallFtpFile(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId);
+/*
+ * sets FTP transfer data type.
+ *
+ * When transferring text data, set "type" to "WiFi_FtpFile_Ascii". And to
+ * prevent data loss when transferring images, executables, .elf's, ..etc, set
+ * "type" to "WiFi_FtpFile_Binary".
+ */
+b8 WiFi_b8SetFtpDataType(WiFi_t* module, u8 cmdLinkId, WiFi_FtpFile_t type);
+
+/*	opens passive FTP connection	*/
+b8 WiFi_b8OpenFtpPassiveConnection(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId);
+
+/*
+ * Downloads small file from FTP server (stored in "module"'s "buffer"
+ *
+ * Notice that:
+ * 	-	FTP server must be initially connected and logged into, on "cmdLinkId".
+ *
+ * 	-	"dataLinkId" would be used in passive data transfer, so, make sure it is
+ * 		not being used before using in this function.
+ *
+ *	-	When transferring text data, set "type" to "WiFi_FtpFile_Ascii". And to
+ *		prevent data loss when transferring images, executables, .elf's, ..etc,
+ *		set "type" to "WiFi_FtpFile_Binary".
+ *
+ * 	-	if size of the file is larger than "WIFI_MAX_RESPONSE_LEN" (buffer's
+ * 		size), only the buffer would be filled, and rest of the data would be
+ * 		ignored.
+ * */
+b8 WiFi_b8DownloadSmallFtpFile(
+	WiFi_t* module, u8 cmdLinkId, u8 dataLinkId, WiFi_FtpFile_t type,
+	char* fileNameStr);
+
 
 
 

@@ -420,10 +420,7 @@ b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
 	u16 bufferUsedLen;
 	if (!UART_b8ReceiveStringTimeout(
 		module->uartUnitNumber, module->buffer, msTimeout, ":", &bufferUsedLen))
-	{
-		trace_printf("failed at 1\n");
 		return false;
-	}
 
 	/*
 	 * extract length of the received data
@@ -457,13 +454,8 @@ b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
 		(void)UART_enumReciveByte(module->uartUnitNumber, &module->buffer[i]);
 
 		if (STK_u64GetElapsedTicks() - startTime > msTimeout * STK_TICKS_PER_MS)
-		{
-			trace_printf("failed at 2\n");
 			return false;
-		}
 	}
-
-	trace_printf("LinkID = %u\n", (u32)(*linkIdPtr));
 
 	module->buffer[dataLen] = '\0';
 
@@ -501,10 +493,10 @@ b8 WiFi_b8ConnectToFTP(
 	if (!cmdSuccess || (receivedLinkId != cmdlinkId))
 		return false;
 
-	/*	log-in	*/
 	char tempBuffer[WIFI_MAX_PARAM_LEN];
 
-	if (user != NULL)
+	/*	log-in	*/
+		if (user != NULL)
 	{
 		Delay_voidBlockingDelayMs(1);
 
@@ -544,7 +536,166 @@ b8 WiFi_b8ConnectToFTP(
 	return true;
 }
 
+b8 WiFi_b8SetFtpDataType(WiFi_t* module, u8 cmdLinkId, WiFi_FtpFile_t type)
+{
+	b8 cmdSuccess;
+	u8 receivedLinkId;
+	char tempBuffer[WIFI_MAX_PARAM_LEN];
 
+	sprintf(tempBuffer, "Type %c\r\n", (type == WiFi_FtpFile_Ascii) ? 'A' : 'I');
+
+	cmdSuccess = WiFi_b8SendData(module, tempBuffer, cmdLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	/*	wait for server to send ack	*/
+	cmdSuccess = WiFi_b8Recv(
+		module, &receivedLinkId, WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+
+	if (!cmdSuccess || (receivedLinkId != cmdLinkId))
+		return false;
+
+	return true;
+}
+
+b8 WiFi_b8OpenFtpPassiveConnection(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId)
+{
+	b8 cmdSuccess;
+	u8 receivedLinkId;
+
+	/*	command FTP server to open passive connection	*/
+	cmdSuccess = WiFi_b8SendData(module, "PASV\r\n", cmdLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	/*	wait for server to send passive information	*/
+	cmdSuccess = WiFi_b8Recv(
+		module, &receivedLinkId, WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+
+	if (!cmdSuccess || (receivedLinkId != cmdLinkId))
+		return false;
+
+	/*	extract passive connection IP address	*/
+	char ipStr[16];
+
+	u8 i = 0;
+	u8 j = 0;
+
+	/*	get index of the '('	*/
+	while (module->buffer[i] != '(')	i++;
+
+	/*	starting from after the '(', IP address exists	*/
+	for (i = i + 1; module->buffer[i] != ','; i++)
+		ipStr[j++] = module->buffer[i];
+
+	ipStr[j++] = '.';
+
+	for (i = i + 1; module->buffer[i] != ','; i++)
+		ipStr[j++] = module->buffer[i];
+
+	ipStr[j++] = '.';
+
+	for (i = i + 1; module->buffer[i] != ','; i++)
+		ipStr[j++] = module->buffer[i];
+
+	ipStr[j++] = '.';
+
+	for (i = i + 1; module->buffer[i] != ','; i++)
+		ipStr[j++] = module->buffer[i];
+
+	ipStr[j] = '\0';
+
+	/*	extracting passive connection port	*/
+	char portStr[6];
+
+	j = 0;
+
+	for (i = i + 1; module->buffer[i] != ','; i++)
+		portStr[j++] = module->buffer[i];
+
+	portStr[j] = '\0';
+
+	u16 portHighByte = atoi(portStr);
+
+	j = 0;
+
+	for (i = i + 1; module->buffer[i] != ')'; i++)
+		portStr[j++] = module->buffer[i];
+
+	portStr[j] = '\0';
+
+	u16 portLowByte = atoi(portStr);
+
+	sprintf(portStr, "%u", (u32)((portHighByte << 8) | portLowByte));
+
+	Delay_voidBlockingDelayMs(1);
+
+	/*	start connection to data port on data linkID	*/
+	cmdSuccess =
+		WiFi_b8ConnectToTcpMultipleConnections(
+			module, dataLinkId, ipStr, portStr);
+
+	if (!cmdSuccess || (receivedLinkId != cmdLinkId))
+		return false;
+
+	return true;
+}
+
+b8 WiFi_b8DownloadSmallFtpFile(
+	WiFi_t* module, u8 cmdLinkId, u8 dataLinkId, WiFi_FtpFile_t type,
+	char* fileNameStr)
+{
+	b8 cmdSuccess;
+	u8 receivedLinkId;
+	char tempBuffer[WIFI_MAX_PARAM_LEN];
+
+	/*	send type of data through command link	*/
+	cmdSuccess = WiFi_b8SetFtpDataType(module, cmdLinkId, type);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(1);
+
+	/*	open passive connection	*/
+	cmdSuccess = WiFi_b8OpenFtpPassiveConnection(module, cmdLinkId, dataLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(1);
+
+	/*	send download command on cmd linkID	*/
+	sprintf(tempBuffer, "RETR %s\r\n", fileNameStr);
+
+	cmdSuccess = WiFi_b8SendData(module, tempBuffer, cmdLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(1);
+
+	/*
+	 * wait for data on data linkID.
+	 */
+	while (1)
+	{
+		cmdSuccess =
+			WiFi_b8Recv(
+				module, &receivedLinkId, WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+
+		if (!cmdSuccess)
+			return false;
+
+		if (receivedLinkId == dataLinkId)
+			break;
+	}
+
+	/*	data now is received and ready at module's buffer	*/
+	return true;
+}
 
 
 

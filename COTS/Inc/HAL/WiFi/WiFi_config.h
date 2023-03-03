@@ -11,7 +11,7 @@
 
 #define WIFI_MAX_RESPONSE_LEN			1024
 
-#define WIFI_MAX_PARAM_LEN				20
+#define WIFI_MAX_PARAM_LEN				128
 
 #define WIFI_MAX_NUMBER_OF_PARAMS		10
 
