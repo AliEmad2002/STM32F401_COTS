@@ -114,7 +114,9 @@ b8 UART_b8ReceiveByteTimeout(UART_UnitNumber_t UARTn, char* bytePtr, u16 msTimeo
 
 void UART_voidReceiveUntilByte(UART_UnitNumber_t UARTn, char* str, char term);
 
-b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout, char* terminatorStr);
+b8 UART_b8ReceiveStringTimeout(
+	UART_UnitNumber_t UARTn, char* str, u32 msTimeout, char* terminatorStr,
+	u16* lenPtr);
 
 void UART_voidSendString(UART_UnitNumber_t UARTn, char* str);
 

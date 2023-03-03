@@ -167,7 +167,7 @@ b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId);
 /*
  * Waits for new received data with certain timeout, then receives in modules buffer
  */
-b8 WiFi_b8Recv(WiFi_t* module, u16 msTimeout);
+b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout);
 
 /*
  * Closes TCP connection.
@@ -196,7 +196,21 @@ b8 WiFi_b8DeleteTcpServer(WiFi_t* module);
 /*	pinging a certain domain	*/
 b8 WiFi_b8Ping(WiFi_t* module, char* domainStr, u16* msTimeoutPtr);
 
+/*******************************************************************************
+ *	FTP:
+ *	Note: multiple connections MUST be enabled
+ *	(if not, "WiFi_b8ConnectToFTP()" function will enable it).
+ ******************************************************************************/
+/*
+ * Connects as a client to an FTP server (over TCP).
+ *
+ * For anonymous logins, set "user" and "pass" to: "NULL".
+ */
+b8 WiFi_b8ConnectToFTP(
+	WiFi_t* module, char* ip, char* port, char* user, char* pass, u8 cmdlinkId);
 
+/*	Downloads small file from FTP server (stored in "module"'s "buffer"	*/
+b8 WiFi_b8DownloadSmallFtpFile(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId);
 
 
 

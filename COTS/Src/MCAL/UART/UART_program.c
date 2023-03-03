@@ -234,12 +234,19 @@ void UART_voidFastInit(UART_UnitNumber_t UARTn, u32 baudRate, u8 map)
 		u8 RxPin = RxPortAndPin & 0x0F;
 		GPIO_PortName_t RxPort = (GPIO_PortName_t)(RxPortAndPin >> 4);
 
+		/*	enable RCC clock of GPIO and AFIO	*/
+		RCC_voidEnablePeripheralClk(RCC_Bus_APB2, RCC_PERIPHERAL_IOPA + TxPort);
+		RCC_voidEnablePeripheralClk(RCC_Bus_APB2, RCC_PERIPHERAL_IOPA + RxPort);
+		RCC_voidEnablePeripheralClk(RCC_Bus_APB2, RCC_PERIPHERAL_AFIO);
+
+		/*	init GPIO	*/
 		GPIO_voidSetPinMode(TxPort, TxPin, GPIO_Mode_AF_PushPull);
 		GPIO_voidSetPinOutputSpeed(TxPort, TxPin, GPIO_OutputSpeed_50MHz);
 
 		GPIO_voidSetPinMode(RxPort, RxPin, GPIO_Mode_AF_PushPull);
 		GPIO_voidSetPinOutputSpeed(RxPort, RxPin, GPIO_OutputSpeed_Null);
 
+		/*	init AFIO	*/
 		if (UARTn == UART_UnitNumber_1)
 			AFIO_voidRemap(AFIO_Peripheral_USART1, map);
 
@@ -286,8 +293,9 @@ void UART_voidSetStopBits(UART_UnitNumber_t UARTn, UART_StopBits_t sb)
 
 UART_Error_t UART_enumReciveByte(UART_UnitNumber_t UARTn, char* bytePtr)
 {
+	volatile b8 foo = true;
 	/*	wait for read data register to be empty (data to be received)	*/
-	while (!GET_BIT(UART[UARTn]->SR, 5));
+	while (!GET_BIT(UART[UARTn]->SR, 5) && foo);
 
 	*bytePtr = UART[UARTn]->DR;
 
@@ -376,7 +384,9 @@ void UART_voidReceiveUntilByte(UART_UnitNumber_t UARTn, char* str, char term)
 	}
 }
 
-b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout, char* terminatorStr)
+b8 UART_b8ReceiveStringTimeout(
+	UART_UnitNumber_t UARTn, char* str, u32 msTimeout, char* terminatorStr,
+	u16* lenPtr)
 {
 	/*	init timing variables	*/
 	volatile u64 startTime = STK_u64GetElapsedTicks();
@@ -384,23 +394,27 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 	volatile u64 tickInterval =
 		((u64)STK_u32GetTicksPerSecond() * (u64)msTimeout) / 1000;
 
-	u16 i = 0;
+	/*	index that accesses "terminatorStr"	*/
 	u16 j = 0;
+
+	/*	index that accesses "str", and used also as a result value	*/
+	*lenPtr = 0;
+
 	while((lastTimeStamp - startTime) < tickInterval)
 	{
 		if (GET_BIT(UART[UARTn]->SR, 5))
 		{
 			/*	on receive, concatenate to str	*/
-			str[i] = UART[UARTn]->DR;
+			str[*lenPtr] = UART[UARTn]->DR;
 
 			/*	compare just received byte with terminatorStr[j]	*/
 			/*	if they match	*/
-			if (str[i] == terminatorStr[j])
+			if (str[*lenPtr] == terminatorStr[j])
 			{
 				/*	if the last byte in terminatorStr was matched	*/
 				if (terminatorStr[j+1] == '\0')
 				{
-					str[++i] = '\0';
+					str[++(*lenPtr)] = '\0';
 					/*
 					#if DEBUG_ON
 					trace_printf("received: \"");
@@ -420,7 +434,7 @@ b8 UART_b8ReceiveStringTimeout(UART_UnitNumber_t UARTn, char* str, u32 msTimeout
 				/*	will start comparison sequence again	*/
 				j = 0;
 			}
-			i++;
+			(*lenPtr)++;
 		}
 		lastTimeStamp = STK_u64GetElapsedTicks();
 	}

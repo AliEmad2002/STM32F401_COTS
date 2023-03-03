@@ -74,8 +74,9 @@ typedef enum{
 	GPIO_Pin_C12    = 16*2 + 12,
 	GPIO_Pin_C13    = 16*2 + 13,
 	GPIO_Pin_C14    = 16*2 + 14,
-	GPIO_Pin_C15    = 16*2 + 15
+	GPIO_Pin_C15    = 16*2 + 15,
 	/*	~~~~~~~~~~~~	*/
+	GPIO_Pin_NotConnected
 }GPIO_Pin_t;
 
 typedef enum{
