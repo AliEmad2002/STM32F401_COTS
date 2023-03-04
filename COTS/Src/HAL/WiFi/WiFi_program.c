@@ -447,16 +447,27 @@ b8 WiFi_b8ConnectToTcpMultipleConnections(
 		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
 }
 
-//void WiFi_voidWaitLastSendToBeDone(WiFi_t* module)
-//{
-//	//	TODO
-//}
+b8 WiFi_b8WaitSendOK(WiFi_t* module)
+{
+	u16 bufferUsedLen;
+	return UART_b8ReceiveStringTimeout(
+		module->uartUnitNumber, module->buffer,
+		WIFI_COMMUNICATION_INTERVAL_DELAY_MS, "OK",
+		&bufferUsedLen);
+}
 
 b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId)
 {
 	/*	get length of data	*/
 	u16 dataLen = strlen(str);
 
+	/*	send	*/
+	return WiFi_b8SendDataCustomLen(module, str, dataLen, linkId);
+}
+
+b8 WiFi_b8SendDataCustomLen(
+	WiFi_t* module, char* dataStr, u16 dataLen, u8 linkId)
+{
 	if (dataLen > 2048)
 		return false;
 
@@ -486,10 +497,10 @@ b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId)
 	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	send data	*/
-	UART_voidSendString(module->uartUnitNumber, str);
+	for (u16 i = 0; i < dataLen; i++)
+		(void)UART_enumSendByte(module->uartUnitNumber, dataStr[i]);
 
 	return true;
-
 }
 
 b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
@@ -507,7 +518,10 @@ b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
 	u16 bufferUsedLen;
 	if (!UART_b8ReceiveStringTimeout(
 		module->uartUnitNumber, module->buffer, msTimeout, ":", &bufferUsedLen))
+	{
+		trace_printf("E1");
 		return false;
+	}
 
 	/*
 	 * extract length of the received data
@@ -541,7 +555,10 @@ b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
 		(void)UART_enumReciveByte(module->uartUnitNumber, &module->buffer[i]);
 
 		if (STK_u64GetElapsedTicks() - startTime > msTimeout * STK_TICKS_PER_MS)
+		{
+			trace_printf("E2");
 			return false;
+		}
 	}
 
 	module->buffer[dataLen] = '\0';
@@ -614,6 +631,8 @@ b8 WiFi_b8ConnectToFTP(
 
 		if (!cmdSuccess || (receivedLinkId != cmdlinkId))
 			return false;
+
+		Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 		/*	prepare "PASS" command	*/
 		sprintf(tempBuffer, "PASS %s\r\n", pass);
@@ -771,7 +790,7 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	if (!cmdSuccess)
 		return false;
 
-	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
+	//Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*
 	 * wait for data on data linkID.
@@ -824,13 +843,19 @@ b8 WiFi_b8UploadSmallFtpFile(
 	if (!cmdSuccess)
 		return false;
 
+	WiFi_b8WaitSendOK(module);
+
 	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	send file data on data link	*/
-	cmdSuccess = WiFi_b8SendData(module, filedataArr, dataLinkId);
+	cmdSuccess =
+		WiFi_b8SendDataCustomLen(
+			module, filedataArr, fileSizeInBytes, dataLinkId);
 
 	if (!cmdSuccess)
 		return false;
+
+	WiFi_b8WaitSendOK(module);
 
 	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 

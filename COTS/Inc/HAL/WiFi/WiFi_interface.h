@@ -171,16 +171,7 @@ b8 WiFi_b8ConnectToTcpSingleConnection(
 b8 WiFi_b8ConnectToTcpMultipleConnections(
 	WiFi_t* module, u8 linkId, char* address, char* port);
 
-/*
- * Waits for TCP send operation to be done.
- *
- * It is done either by receiving "SEND OK" from the module, or one second since
- * last send operation started (stored statically) passes.
- *
- * If one second since last send operation passes, without even receiving
- * "SEND OK", function assumes previous send is done.
- */
-void WiFi_voidWaitLastSendToBeDone(WiFi_t* module);
+b8 WiFi_b8WaitSendOK(WiFi_t* module);
 
 /*
  * Sends data. (Selected connection must be previously open)
@@ -195,6 +186,13 @@ void WiFi_voidWaitLastSendToBeDone(WiFi_t* module);
  * TODO: use "AT+CIPSENDEX".
  */
 b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId);
+
+/*
+ * Same as the previous function, except that it send required length and does not
+ * terminate at '\0'. Useful when sending binary data.
+ */
+b8 WiFi_b8SendDataCustomLen(
+	WiFi_t* module, char* dataStr, u16 dataLen, u8 linkId);
 
 /*
  * Waits for new received data with certain timeout, then receives in modules buffer

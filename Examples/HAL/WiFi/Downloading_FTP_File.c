@@ -43,6 +43,9 @@ int main(void)
 	STK_voidStartTickMeasure(STK_TickMeasureType_OverflowCount);
 	STK_voidEnableSysTick();
 
+	/*	power stabilization delay	*/
+	Delay_voidBlockingDelayMs(1000);
+
 	/*	init WiFi (ESP8266) object	*/
 	WiFi_t esp8266;
 	WiFi_voidInit(

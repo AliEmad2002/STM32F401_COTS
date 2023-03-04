@@ -10,6 +10,7 @@
 #include "Bit_Math.h"
 #include "Delay_interface.h"
 #include "diag/trace.h"
+#include <string.h>
 
 /*	MCAL	*/
 #include "RCC_interface.h"
@@ -33,6 +34,8 @@
 #define FTP_USER	"epiz_33715505"
 #define FTP_PASS	"scpXn6XYdSexg"
 
+#define UPLOAD_TEXT	"Hello FTP!"
+
 int main(void)
 {
 	/*	init RCC system clock	*/
@@ -42,6 +45,9 @@ int main(void)
 	STK_voidInit();
 	STK_voidStartTickMeasure(STK_TickMeasureType_OverflowCount);
 	STK_voidEnableSysTick();
+
+	/*	power stabilization delay	*/
+	Delay_voidBlockingDelayMs(1000);
 
 	/*	init WiFi (ESP8266) object	*/
 	WiFi_t esp8266;
@@ -88,15 +94,14 @@ int main(void)
 	Delay_voidBlockingDelayMs(1);
 
 	/*	upload file	*/
-	//todo
 	commandSuccess =
-		WiFi_b8DownloadSmallFtpFile(
-			&esp8266, 0, 2, WiFi_FtpFile_Ascii, "htdocs/file.txt");
+		WiFi_b8UploadSmallFtpFile(
+			&esp8266, 0, 1, WiFi_FtpFile_Ascii, "newFile.txt", UPLOAD_TEXT,
+			strlen(UPLOAD_TEXT));
 
 	if (commandSuccess)
 	{
-		trace_printf("received file:\n");
-		trace_printf(esp8266.buffer);
+		trace_printf("uploaded file.\n");
 	}
 
 	else
@@ -115,10 +120,10 @@ int main(void)
 			Delay_voidBlockingDelayMs(2);
 
 			/*	upload file	*/
-			//todo
 			commandSuccess =
-				WiFi_b8DownloadSmallFtpFile(
-					&esp8266, 0, 2, WiFi_FtpFile_Ascii, "htdocs/file.txt");
+				WiFi_b8UploadSmallFtpFile(
+					&esp8266, 0, 1, WiFi_FtpFile_Ascii, "newFile.txt", UPLOAD_TEXT,
+					strlen(UPLOAD_TEXT));
 
 			/*
 			 * this time, if file still can't be uploaded, it must be another
@@ -136,6 +141,11 @@ int main(void)
 				trace_printf("Can't upload file!");
 				trace_printf("Terminating program.\n");
 				return -1;
+			}
+
+			else
+			{
+				trace_printf("uploaded file.\n");
 			}
 
 		}
