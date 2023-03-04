@@ -253,7 +253,7 @@ b8 WiFi_b8SetFtpDataType(WiFi_t* module, u8 cmdLinkId, WiFi_FtpFile_t type);
 b8 WiFi_b8OpenFtpPassiveConnection(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId);
 
 /*
- * Downloads small file from FTP server (stored in "module"'s "buffer"
+ * Downloads small file from FTP server (stored in "module"'s "buffer")
  *
  * Notice that:
  * 	-	FTP server must be initially connected and logged into, on "cmdLinkId".
@@ -273,7 +273,22 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	WiFi_t* module, u8 cmdLinkId, u8 dataLinkId, WiFi_FtpFile_t type,
 	char* fileNameStr);
 
-
+/*
+ * Uploads small file to FTP server.
+ *
+ * Notice that:
+ * 	-	FTP server must be initially connected and logged into, on "cmdLinkId".
+ *
+ * 	-	"dataLinkId" would be used in passive data transfer, so, make sure it is
+ * 		not being used before using in this function.
+ *
+ *	-	When transferring text data, set "type" to "WiFi_FtpFile_Ascii". And to
+ *		prevent data loss when transferring images, executables, .elf's, ..etc,
+ *		set "type" to "WiFi_FtpFile_Binary".
+ * */
+b8 WiFi_b8UploadSmallFtpFile(
+	WiFi_t* module, u8 cmdLinkId, u8 dataLinkId, WiFi_FtpFile_t type,
+	char* fileNameStr, char* filedataArr, u16 fileSizeInBytes);
 
 
 

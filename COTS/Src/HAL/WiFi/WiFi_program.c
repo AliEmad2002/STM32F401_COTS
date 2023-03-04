@@ -549,6 +549,23 @@ b8 WiFi_b8Recv(WiFi_t* module, u8* linkIdPtr, u16 msTimeout)
 	return true;
 }
 
+b8 WiFi_b8CloseConnection(WiFi_t* module, u8 linkId)
+{
+	/*	prepare paramArr	*/
+	char linkIdStr[2];
+	linkIdStr[0] = (char)linkId + '0';
+	linkIdStr[1] = '\0';
+
+	char* paramArr[] = {linkIdStr};
+
+	/*	prepare paramTypeArr	*/
+	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_Numerical};
+
+	return WiFi_b8SendCommand(
+		module, "AT+CIPCLOSE", paramArr, paramTypeArr, 1,
+		"OK", WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+}
+
 /*******************************************************************************
  *	FTP:
  ******************************************************************************/
@@ -776,7 +793,56 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	return true;
 }
 
+b8 WiFi_b8UploadSmallFtpFile(
+	WiFi_t* module, u8 cmdLinkId, u8 dataLinkId, WiFi_FtpFile_t type,
+	char* fileNameStr, char* filedataArr, u16 fileSizeInBytes)
+{
+	b8 cmdSuccess;
+	char tempBuffer[WIFI_MAX_PARAM_LEN];
 
+	/*	send type of data through command link	*/
+	cmdSuccess = WiFi_b8SetFtpDataType(module, cmdLinkId, type);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
+
+	/*	open passive connection	*/
+	cmdSuccess = WiFi_b8OpenFtpPassiveConnection(module, cmdLinkId, dataLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
+
+	/*	send file creation command	*/
+	sprintf(tempBuffer, "STOR %s\r\n", fileNameStr);
+
+	cmdSuccess = WiFi_b8SendData(module, tempBuffer, cmdLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
+
+	/*	send file data on data link	*/
+	cmdSuccess = WiFi_b8SendData(module, filedataArr, dataLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
+
+	/*	close data link connection	*/
+	cmdSuccess = WiFi_b8CloseConnection(module, dataLinkId);
+
+	if (!cmdSuccess)
+		return false;
+
+	/*	upload successful	*/
+	return true;
+}
 
 
 
