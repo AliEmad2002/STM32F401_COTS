@@ -282,10 +282,97 @@ b8 WiFi_b8SetIP(
 /*******************************************************************************
  *	TCP (and UDP):
  ******************************************************************************/
-//b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s)	//TODO
-//{
-//
-//}
+b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s)	//TODO
+{
+	b8 cmdSuccess = WiFi_b8SendCommand(
+		module, "AT+CIPSTATUS", NULL, NULL, 0, "OK",
+		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
+
+	if (!cmdSuccess)
+		return false;
+
+	s16 infoIndex;
+	u8 i;
+	u8 linkId;
+
+	/*	extract AP status	*/
+	infoIndex = String_s16Find(module->buffer, ':', 0);
+
+	if (infoIndex != -1)
+	{
+		infoIndex++;
+
+		s->apStatus = (WiFi_AP_Status_t)(module->buffer[infoIndex] - '0');
+	}
+
+	else
+		return false;
+
+	/*	initially, label all links as non-used	*/
+	for (i = 0; i < 5; i++)
+		s->link[i].isUsed = false;
+
+	/*	extract links info	*/
+	while (1)
+	{
+		infoIndex = String_s16Find(module->buffer, ':', infoIndex);
+
+		if (infoIndex == -1)
+			break;
+
+		infoIndex++;
+
+		/*	get linkID	*/
+		linkId = (u8)(module->buffer[infoIndex] - '0');
+
+		/*	label link as used	*/
+		s->link[linkId].isUsed = true;
+
+		/*	get link's used protocol	*/
+		infoIndex += 3;
+
+		switch(module->buffer[infoIndex])
+		{
+		case 'T':
+			s->link[linkId].protocol = WiFi_Link_Protocol_TCP;
+			break;
+		default: // case 'U':
+			s->link[linkId].protocol = WiFi_Link_Protocol_UDP;
+		}
+
+		/*	get remote IP address	*/
+		i = 0;
+
+		for (infoIndex += 6; module->buffer[infoIndex] != '\"'; infoIndex++)
+			s->link[linkId].remoteIpStr[i++] = module->buffer[infoIndex];
+
+		s->link[linkId].remoteIpStr[i] = '\0';
+
+		/*	get remote port number	*/
+		i = 0;
+
+		for (infoIndex += 2; module->buffer[infoIndex] != ','; infoIndex++)
+			s->link[linkId].remotePortStr[i++] = module->buffer[infoIndex];
+
+		s->link[linkId].remotePortStr[i] = '\0';
+
+		/*	get local port number	*/
+		i = 0;
+
+		for (infoIndex += 1; module->buffer[infoIndex] != ','; infoIndex++)
+			s->link[linkId].localPortStr[i++] = module->buffer[infoIndex];
+
+		s->link[linkId].localPortStr[i] = '\0';
+
+		/*	get connection type	*/
+		infoIndex++;
+
+		s->link[linkId].connectionType =
+			(WiFi_Link_Connection_t)(module->buffer[infoIndex] - '0');
+	}
+
+	return true;
+}
 
 b8 WiFi_b8GetIpFromDns(WiFi_t* module, char* domainStr)
 {
@@ -396,7 +483,7 @@ b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId)
 	if (!cmdSuccess)
 		return false;
 
-	Delay_voidBlockingDelayMs(1);
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	send data	*/
 	UART_voidSendString(module->uartUnitNumber, str);
@@ -471,14 +558,6 @@ b8 WiFi_b8ConnectToFTP(
 	b8 cmdSuccess;
 	u8 receivedLinkId;
 
-	/*	enable multiple connections	*/
-	cmdSuccess = WiFi_b8SetMultipleConnections(module, true);
-
-	if (!cmdSuccess)
-		return false;
-
-	Delay_voidBlockingDelayMs(1);	//	Avoiding "non-valid echo" problem.
-
 	/*	connect to server over TCP	*/
 	cmdSuccess =
 		WiFi_b8ConnectToTcpMultipleConnections(module, cmdlinkId, ip, port);
@@ -498,7 +577,7 @@ b8 WiFi_b8ConnectToFTP(
 	/*	log-in	*/
 		if (user != NULL)
 	{
-		Delay_voidBlockingDelayMs(1);
+		Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 		/*	prepare "USER" command	*/
 		sprintf(tempBuffer, "USER %s\r\n", user);
@@ -630,7 +709,7 @@ b8 WiFi_b8OpenFtpPassiveConnection(WiFi_t* module, u8 cmdLinkId, u8 dataLinkId)
 
 	sprintf(portStr, "%u", (u32)((portHighByte << 8) | portLowByte));
 
-	Delay_voidBlockingDelayMs(1);
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	start connection to data port on data linkID	*/
 	cmdSuccess =
@@ -657,7 +736,7 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	if (!cmdSuccess)
 		return false;
 
-	Delay_voidBlockingDelayMs(1);
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	open passive connection	*/
 	cmdSuccess = WiFi_b8OpenFtpPassiveConnection(module, cmdLinkId, dataLinkId);
@@ -665,7 +744,7 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	if (!cmdSuccess)
 		return false;
 
-	Delay_voidBlockingDelayMs(1);
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*	send download command on cmd linkID	*/
 	sprintf(tempBuffer, "RETR %s\r\n", fileNameStr);
@@ -675,7 +754,7 @@ b8 WiFi_b8DownloadSmallFtpFile(
 	if (!cmdSuccess)
 		return false;
 
-	Delay_voidBlockingDelayMs(1);
+	Delay_voidBlockingDelayMs(WIFI_COMMUNICATION_INTERVAL_DELAY_MS);
 
 	/*
 	 * wait for data on data linkID.

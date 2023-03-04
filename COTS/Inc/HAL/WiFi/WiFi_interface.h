@@ -42,8 +42,35 @@ typedef enum{
 	WiFi_CommandType_TCP_IP
 }WiFi_CommandType_t;
 
-typedef struct{
+typedef enum{
+	WiFi_AP_Status_GotIP = 2,
+	WiFi_AP_Status_Connected,
+	WiFi_AP_Status_Disonnected,
+	WiFi_AP_Status_ConnectionFail
+}WiFi_AP_Status_t;
 
+typedef enum{
+	WiFi_Link_Protocol_TCP,
+	WiFi_Link_Protocol_UDP
+}WiFi_Link_Protocol_t;
+
+typedef enum{
+	WiFi_Link_Connection_Client,
+	WiFi_Link_Connection_Server
+}WiFi_Link_Connection_t;
+
+typedef struct{
+	b8 isUsed;
+	WiFi_Link_Protocol_t protocol;
+	char remoteIpStr[16];
+	char remotePortStr[6];
+	char localPortStr[6];
+	WiFi_Link_Connection_t connectionType;
+}WiFi_Link_Status_t;
+
+typedef struct{
+	WiFi_AP_Status_t apStatus;
+	WiFi_Link_Status_t link[5];
 }WiFi_Status_t;
 
 typedef enum{
@@ -203,8 +230,7 @@ b8 WiFi_b8Ping(WiFi_t* module, char* domainStr, u16* msTimeoutPtr);
 
 /*******************************************************************************
  *	FTP:
- *	Note: multiple connections MUST be enabled
- *	(if not, "WiFi_b8ConnectToFTP()" function will enable it).
+ *	Note: multiple connections MUST be enabled.
  ******************************************************************************/
 /*
  * Connects as a client to an FTP server (over TCP).
