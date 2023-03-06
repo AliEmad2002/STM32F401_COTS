@@ -439,7 +439,7 @@ b8 UART_b8ReceiveStringTimeout(
 		lastTimeStamp = STK_u64GetElapsedTicks();
 	}
 
-	#if DEBUG_ON
+	#if DEBUG_ON & 0
 	trace_printf("received: \"");
 	trace_printf(str);
 	trace_printf("\"\n");
