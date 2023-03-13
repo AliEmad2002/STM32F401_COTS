@@ -331,7 +331,8 @@ void UART_voidSendByteEcho(UART_UnitNumber_t UARTn, char byte)
 	/*	validate	*/
 	if (echo != byte)
 	{
-		UART_NON_VALID_ECHO_HANDLER;
+		Delay_voidBlockingDelayMs(100);
+		//UART_NON_VALID_ECHO_HANDLER;
 	}
 }
 
