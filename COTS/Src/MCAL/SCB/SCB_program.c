@@ -53,7 +53,7 @@ void SCB_voidSetCorePeripheralPriority(u8 sysHandlerInex, u8 priVal)
 
 void SCB_voidResetSystem(void)
 {
-	WRITE_AIRCR(SCB_AIRCR_SYSRESETREQ, 1, 1);
+	SCB_voidWriteAircr(SCB_AIRCR_SYSRESETREQ, 1, 1);
 }
 
 /*
