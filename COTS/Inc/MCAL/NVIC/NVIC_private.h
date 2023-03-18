@@ -36,7 +36,7 @@
 #elif TARGET_ID == STM32F10x
 typedef struct{
 	u32 ISER[3];
-	u32 reserved1[0x1C];
+	u32 reserved1[0x1D];
 	u32 ICER[3];
 	u32 reserved2[0x1D];
 	u32 ISPR[3];
@@ -44,10 +44,11 @@ typedef struct{
 	u32 ICPR[3];
 	u32 reserved4[0x1D];
 	u32 IABR[3];
-	u8 reserved5[0xF7];
+	u32 reserved5[0x3D];
 	u8 IPR[81];
-	u8 reserved6[0xAAB];
-	u32 STIR;
+	u8 reserved6[0x3];
+	u32 reserved7[0x26B];
+	u32 STIR[1];
 }NVIC_t;
 
 #define NVIC ((volatile NVIC_t*)0xE000E100)

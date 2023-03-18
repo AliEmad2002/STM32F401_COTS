@@ -22,6 +22,9 @@
 /*	2^n	*/
 #define POW_TWO(n)						(1 << (n))
 
+/*	maximum of n-bits (2^n - 1) */
+#define MAX_N_BITS(n)					(POW_TWO((n)) - 1)
+
 #define GET_REG_SEC(reg, start, len)	(((reg) >> (start)) & (POW_TWO((len)) - 1))
 
 /*

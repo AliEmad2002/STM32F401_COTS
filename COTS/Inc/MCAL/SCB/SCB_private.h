@@ -13,6 +13,7 @@
 #define SCB_PRIVATE_H_
 
 typedef struct{
+	u32 CPUID;
 	u32 ICSR;
 	u32 VTOR;
 	u32 AIRCR;

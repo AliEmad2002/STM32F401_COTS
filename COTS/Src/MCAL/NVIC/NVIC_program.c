@@ -108,6 +108,7 @@ void NVIC_voidSetInterruptPriority(volatile NVIC_Interrupt_t interrupt, u8 group
 	default:
 		// write it on IPR:
 		NVIC->IPR[interrupt] = (binPoint << 4);
+		break;
 	}
 }
 

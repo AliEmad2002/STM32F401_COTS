@@ -17,17 +17,27 @@
 
 /*
  * as mentioned in datasheet, "AIRCR" writes are ignored unless "VECTKEY" is
- * written in the most significant 16-bits at every write operation, this is a
- * macro that does this.
+ * written in the most significant 16-bits at every write operation, this is aN
+ * function that does this.
  */
-#define WRITE_AIRCR(start, val, len)						\
-	(scb->AIRCR =						   					\
-		(scb->AIRCR & ~((POW_TWO((len))-1) << (start))) | 	\
-		((val) << (start)) | (SCB_VECTKEY << 16))
+void SCB_voidWriteAircr(u8 start, u32 val, u8 len)
+{
+	/*	take copy of AIRCR	*/
+	u32 temp = scb->AIRCR;
+
+	/*	write key	*/
+	EDT_REG(temp, 16, SCB_VECTKEY, 16);
+
+	/*	write val	*/
+	EDT_REG(temp, start, val, len);
+
+	/*	write on real AIRCR	*/
+	scb->AIRCR = temp;
+}
 
 void SCB_voidSetPriorityGroupsAndSubGroupsNumber(SCB_PRIGROUP_t set)
 {
-	WRITE_AIRCR(8, set, 3);
+	SCB_voidWriteAircr(8, set, 3);
 }
 
 // returns the value of PRIGROUP bits in SCB_AIRCR
