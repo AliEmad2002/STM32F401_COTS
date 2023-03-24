@@ -48,7 +48,17 @@ SCB_PRIGROUP_t SCB_enumGetPriorityGroupsAndSubGroupsNumber(void)
 
 void SCB_voidSetCorePeripheralPriority(u8 sysHandlerInex, u8 priVal)
 {
-	scb->SHPR[sysHandlerInex - 4] = (priVal << 4);
+	/*	TODO:	add the rest of the table in P138 in core datasheet	*/
+	switch(sysHandlerInex)
+	{
+	case 14: //	PendSV
+		EDT_REG(scb->SHPR[2], 16, priVal << 4, 8);
+		break;
+
+	case 15: //	SysTick
+		EDT_REG(scb->SHPR[2], 24, priVal << 4, 8);
+		break;
+	}
 }
 
 void SCB_voidResetSystem(void)

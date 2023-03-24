@@ -47,7 +47,7 @@ b8 NVIC_b8GetActiveFlag(NVIC_Interrupt_t interrupt)
 	return GET_BIT(NVIC->IABR[interrupt/32], interrupt%32);
 }
 
-void NVIC_voidSetInterruptPriority(volatile NVIC_Interrupt_t interrupt, u8 group, u8 sub)
+void NVIC_voidSetInterruptPriority(NVIC_Interrupt_t interrupt, u8 group, u8 sub)
 {
 	// read current priority grouping settings:
 	SCB_PRIGROUP_t priGroupSettings =

@@ -184,8 +184,16 @@ inline u64 STK_u64GetElapsedTicks(void)
 	return ((ovfCount << 24) - ((u64)(STK->VAL)));
 }
 
-/*	notice that countFlag clears to zero once read	*/
+/*
+ * notice that countFlag clears to zero once read.
+ * it is also used as interrupt flag.
+ */
 b8 STK_b8GetAndClearCountFlag(void)
+{
+	return GET_BIT(STK->CTRL, STK_COUNTFLAG);
+}
+
+b8 STK_b8GetAndClearInterruptFlag(void)
 {
 	return GET_BIT(STK->CTRL, STK_COUNTFLAG);
 }
@@ -203,29 +211,28 @@ void STK_voidUpdatetTicksPerSecond(void)
 }
 
 /*	Handler	*/
-void SysTick_Handler(void)
-{
-	/* increment ovfCount (if enabled)	*/
-	ovfCount++;
-
-//	if (ovfCountEnabled)
-//		ovfCount++;
+//void SysTick_Handler(void)
+//{
+//	/* increment ovfCount (if enabled)	*/
+//	ovfCount++;
 //
-//	/*	only once?	*/
-//	if (interruptOnlyOnce)
-//	{
-//		if (hadExcutedIsr)
-//			goto clearingInterruptFlag;
-//		else
-//			hadExcutedIsr = true;
-//	}
+////	if (ovfCountEnabled)
+////		ovfCount++;
+////
+////	/*	only once?	*/
+////	if (interruptOnlyOnce)
+////	{
+////		if (hadExcutedIsr)
+////			goto clearingInterruptFlag;
+////		else
+////			hadExcutedIsr = true;
+////	}
+////
+////	/*	callBack notification	*/
+////	if (interruptCallback != NULL)
+////		interruptCallback();
 //
-//	/*	callBack notification	*/
-//	if (interruptCallback != NULL)
-//		interruptCallback();
-
-	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
-	//clearingInterruptFlag:
-	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
-}
-
+//	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
+//	//clearingInterruptFlag:
+//	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
+//}

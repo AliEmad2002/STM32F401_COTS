@@ -19,7 +19,7 @@ typedef struct{
 	u32 AIRCR;
 	u32 SCR;
 	u32 CCR;
-	u8 SHPR[12];
+	u32 SHPR[3];
 	u32 SHCRS;
 	u32 CFSR;
 	u32 HFSR;
@@ -33,7 +33,15 @@ static SCB_t* const scb = (SCB_t* const)SCB_BASE_ADD;
 
 #define SCB_VECTKEY	0x5FA
 
+/*	ICSR bits	*/
+#define SCB_ICSR_PENDSVSET		28
+#define SCB_ICSR_PENDSVCLR		27
+#define SCB_ICSR_PENDSTSET		26
+#define SCB_ICSR_PENDSTCLR		26
+
 /*	AIRCR bits	*/
 #define SCB_AIRCR_SYSRESETREQ	2
+
+
 
 #endif /* SCB_PRIVATE_H_ */

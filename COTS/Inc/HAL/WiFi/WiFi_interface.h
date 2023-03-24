@@ -7,10 +7,6 @@
  *
  * All "b8" functions return "true" if done successfully, "false" otherwise. Unless
  * otherwise mentioned.
- *
- * TODO: This driver is under update.
- * Done interface file.
- * Implement!.
  */
 
 #ifndef HAL_WIFI_WIFI_INTERFACE_H_
@@ -182,8 +178,6 @@ b8 WiFi_b8WaitSendOK(WiFi_t* module);
  * send operation to be done. Use: "WiFi_voidWaitLastSendToBeDone()"
  *
  * "linkId" is ignored if multiple connections was not enabled.
- *
- * TODO: use "AT+CIPSENDEX".
  */
 b8 WiFi_b8SendData(WiFi_t* module, char* str, u8 linkId);
 

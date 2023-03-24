@@ -40,4 +40,14 @@ void SCB_voidWriteVectorTableOffset(u32 offset, SCB_VTOR_t type);
 
 u32 SCB_u32GetVectorTableOffset(void);
 
+#include "SCB_private.h"
+
+#define SCB_SET_PENDSV	(SET_BIT(scb->ICSR, SCB_ICSR_PENDSVSET))
+
+#define SCB_CLR_PENDSV	(SET_BIT(scb->ICSR, SCB_ICSR_PENDSVCLR))
+
+#define SCB_SET_PENDSTK	(SET_BIT(scb->ICSR, SCB_ICSR_PENDSTSET))
+
+#define SCB_CLR_PENDSTK	(SET_BIT(scb->ICSR, SCB_ICSR_PENDSTCLR))
+
 #endif /* SCB_INTERFACE_H_ */

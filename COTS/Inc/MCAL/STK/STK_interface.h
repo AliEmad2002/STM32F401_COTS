@@ -67,6 +67,8 @@ void STK_voidStartTickMeasure(STK_TickMeasureType_t type);
 
 void STK_voidStopTickMeasure(STK_TickMeasureType_t type);
 
+b8 STK_b8GetAndClearInterruptFlag(void);
+
 /*	getting timestamp	*/
 u32 STK_u32GetElapsedTicks(void);
 u64 STK_u64GetElapsedTicks(void);

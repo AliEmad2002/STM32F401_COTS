@@ -36,7 +36,9 @@
  */
 void BitMath_voidEditRegister(u32* regPtr, u8 start, u32 val, u8 len);
 
-#define EDT_REG(reg, start, val, len)		BitMath_voidEditRegister((u32*)&(reg), start, val, len)
+#define EDT_REG(reg, start, val, len)	BitMath_voidEditRegister((u32*)&(reg), start, val, len)
 
+#define GET_WORD_AT(basePtr, offset)	\
+	(*((u32*)((u32)(basePtr) + (offset) * 4)))
 
 #endif /* BIT_MATH_H_ */

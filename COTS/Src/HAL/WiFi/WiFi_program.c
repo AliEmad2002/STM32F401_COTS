@@ -282,7 +282,7 @@ b8 WiFi_b8SetIP(
 /*******************************************************************************
  *	TCP (and UDP):
  ******************************************************************************/
-b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s)	//TODO
+b8 WiFi_b8GetStatus(WiFi_t* module, WiFi_Status_t* s)
 {
 	b8 cmdSuccess = WiFi_b8SendCommand(
 		module, "AT+CIPSTATUS", NULL, NULL, 0, "OK",
@@ -383,9 +383,6 @@ b8 WiFi_b8GetIpFromDns(WiFi_t* module, char* domainStr)
 	WiFi_Parameter_t paramTypeArr[] = {WiFi_Parameter_String};
 
 	/*	enter command	*/
-	/*
-	 * TODO: try it. what does sit terminate with? it is not 'OK'.
-	 */
 	return WiFi_b8SendCommand(
 		module, "AT+CIPDOMAIN", paramArr, paramTypeArr, 1, "OK",
 		WIFI_COMMAND_ACK_RESPONSE_TIMEOUT_MS);
