@@ -39,7 +39,7 @@
  *	 RCC_SYSCLOCKSWITCH_PLL = 2,
  * }RCC_SYSCLOCKSWITCH;
  */
-#define RCC_SYS_SOURCE	RCC_SYSCLOCKSWITCH_HSE
+#define RCC_SYS_SOURCE	RCC_SYSCLOCKSWITCH_HSI
 /*	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~		*/
 
 /*	HSE pybass (if used)	*/
