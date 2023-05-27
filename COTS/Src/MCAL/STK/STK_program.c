@@ -179,7 +179,7 @@ u32 STK_u32GetElapsedTicks(void)
  * used only when ovfCOunt is enabled, has a maximum counting capability of:
  * (2^24 - 1) * (2^32 - 1) / F_CLK =~ 92 years. 😅😂 suit your self.
  */
-inline u64 STK_u64GetElapsedTicks(void)
+inline __attribute__((always_inline)) u64 STK_u64GetElapsedTicks(void)
 {
 	return ((ovfCount << 24) - ((u64)(STK->VAL)));
 }
@@ -211,28 +211,28 @@ void STK_voidUpdatetTicksPerSecond(void)
 }
 
 /*	Handler	*/
-//void SysTick_Handler(void)
-//{
-//	/* increment ovfCount (if enabled)	*/
-//	ovfCount++;
+void SysTick_Handler(void)
+{
+	/* increment ovfCount (if enabled)	*/
+	ovfCount++;
+
+//	if (ovfCountEnabled)
+//		ovfCount++;
 //
-////	if (ovfCountEnabled)
-////		ovfCount++;
-////
-////	/*	only once?	*/
-////	if (interruptOnlyOnce)
-////	{
-////		if (hadExcutedIsr)
-////			goto clearingInterruptFlag;
-////		else
-////			hadExcutedIsr = true;
-////	}
-////
-////	/*	callBack notification	*/
-////	if (interruptCallback != NULL)
-////		interruptCallback();
+//	/*	only once?	*/
+//	if (interruptOnlyOnce)
+//	{
+//		if (hadExcutedIsr)
+//			goto clearingInterruptFlag;
+//		else
+//			hadExcutedIsr = true;
+//	}
 //
-//	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
-//	//clearingInterruptFlag:
-//	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
-//}
+//	/*	callBack notification	*/
+//	if (interruptCallback != NULL)
+//		interruptCallback();
+
+	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
+	//clearingInterruptFlag:
+	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
+}
