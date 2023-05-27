@@ -20,7 +20,7 @@
 #define BPF_0_FS								ADM_MIC_FILTER_FS
 
 // Gain (must be float):
-#define PBF_0_K									ADM_MIC_FILTER_K
+#define BPF_0_K									ADM_MIC_FILTER_K
 
 // Quality factor (must be float):
 #define BPF_0_Q									ADM_MIC_FILTER_Q
