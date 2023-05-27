@@ -9,6 +9,7 @@
 #define INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 
 #include "TIM_private.h"
+#include "RCC_interface.h"
 
 /******************************************************************************
  * Enums of timers and channels.
