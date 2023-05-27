@@ -8,6 +8,8 @@
 #ifndef INCLUDE_MCAL_ADC_ADC_INTERFACE_H_
 #define INCLUDE_MCAL_ADC_ADC_INTERFACE_H_
 
+#include "ADC_Private.h"
+
 typedef enum{
 	ADC_UnitNumber_1,
 	ADC_UnitNumber_2
@@ -510,6 +512,8 @@ u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un);
 u16 ADC_u16GetDataRegularUnit1(void);
 
 u16 ADC_u16GetDataRegularUnit2(void);
+
+#define ADC_GET_DATA_REGULAR(unitNumber)	((u16)(ADC[un]->DR))
 
 /*
  * reads data of regular conversions in dual mode.
