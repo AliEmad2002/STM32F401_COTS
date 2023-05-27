@@ -513,7 +513,7 @@ u16 ADC_u16GetDataRegularUnit1(void);
 
 u16 ADC_u16GetDataRegularUnit2(void);
 
-#define ADC_GET_DATA_REGULAR(unitNumber)	((u16)(ADC[un]->DR))
+#define ADC_GET_DATA_REGULAR(unitNumber)	((u16)(ADC[unitNumber]->DR))
 
 /*
  * reads data of regular conversions in dual mode.
