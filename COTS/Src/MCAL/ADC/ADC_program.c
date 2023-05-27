@@ -613,7 +613,7 @@ inline s16 ADC_s16GetDataInjected(
 }
 
 /*	reads data of regular conversions	*/
-inline u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un)
+inline __attribute__((always_inline)) u16 ADC_u16GetDataRegular(ADC_UnitNumber_t un)
 {
 	return (u16)(ADC[un]->DR);
 }
