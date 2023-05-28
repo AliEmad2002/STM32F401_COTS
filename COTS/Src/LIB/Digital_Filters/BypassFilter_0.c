@@ -49,6 +49,9 @@ static void filter()
 
 	yPrev[1] = yPrev[0];
 	yPrev[0] = y;
+
+	// clear status flag:
+	TIM_CLEAR_STATUS_FLAG(TIM_UNIT, TIM_Status_Update);
 }
 
 void BypassFilter_0_voidInit()
@@ -62,14 +65,9 @@ void BypassFilter_0_voidInit()
 	TIM_voidSetCallbackGP(TIM_UNIT, filter);
 #endif
 
-	const NVIC_Interrupt_t intNumber[] = {
-		NVIC_Interrupt_TIM1UP, NVIC_Interrupt_TIM2,
-		NVIC_Interrupt_TIM3, NVIC_Interrupt_TIM4,
-		NVIC_Interrupt_TIM5, NVIC_Interrupt_TIM6,
-		NVIC_Interrupt_TIM7, NVIC_Interrupt_TIM8UP
-	};
-	NVIC_voidSetInterruptPriority(intNumber[TIM_UNIT-1], INTERRUPT_PRI_GROUP, INTERRUPT_PRI_SUB);
-	NVIC_voidEnableInterrupt(intNumber[TIM_UNIT-1]);
+	NVIC_Interrupt_t intNumber = TIM_u8GetUpdateEventInterruptNumber(TIM_UNIT);
+	NVIC_voidSetInterruptPriority(intNumber, INTERRUPT_PRI_GROUP, INTERRUPT_PRI_SUB);
+	NVIC_voidEnableInterrupt(intNumber);
 }
 
 void ByPassFilter_0_voidEnable()

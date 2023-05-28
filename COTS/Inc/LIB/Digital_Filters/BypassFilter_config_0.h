@@ -9,9 +9,10 @@
 #define INCLUDE_LIB_DIGITAL_FILTERS_BYPASSFILTER_0_H_
 
 #include "Std_Types.h"
-#include "Acoustic_Distance_Meter_config.h"
 #include "ADC_Interface.h"
+#include "Acoustic_Distance_Meter_config.h"
 #include "Acoustic_Distance_Meter.h"
+#include "Microphone.h"
 
 // middle frequency (in rad/sec) (must be float):
 #define BPF_0_WM								ADM_MIC_FILTER_WM
@@ -45,7 +46,7 @@
  * 			float and returns void.
  * 		-	Macro that takes a floating point value. (For faster performance)
  */
-#define BPF_0_SFC_CALLBACK(filteredSample)		(ADM_voidMicFilterCallback(filteredSample))
+#define BPF_0_SFC_CALLBACK(filteredSample)		(Microphone_voidFilterCallback(filteredSample))
 
 
 #endif /* INCLUDE_LIB_DIGITAL_FILTERS_BYPASSFILTER_0_H_ */

@@ -39,14 +39,9 @@ void ByPassFilter_voidInit(
 	TIM_u64SetFrequency(timerUnitNumber, (u64)(fs * 1000.0f));
 	TIM_voidEnableInterrupt(timerUnitNumber, TIM_Interrupt_Update);
 
-	const NVIC_Interrupt_t intNumber[] = {
-		NVIC_Interrupt_TIM1UP, NVIC_Interrupt_TIM2,
-		NVIC_Interrupt_TIM3, NVIC_Interrupt_TIM4,
-		NVIC_Interrupt_TIM5, NVIC_Interrupt_TIM6,
-		NVIC_Interrupt_TIM7, NVIC_Interrupt_TIM8UP
-	};
-	NVIC_voidSetInterruptPriority(intNumber[timerUnitNumber-1], priGroup, priSub);
-	NVIC_voidEnableInterrupt(intNumber[timerUnitNumber-1]);
+	NVIC_Interrupt_t intNumber = TIM_u8GetUpdateEventInterruptNumber(timerUnitNumber);
+	NVIC_voidSetInterruptPriority(intNumber, priGroup, priSub);
+	NVIC_voidEnableInterrupt(intNumber);
 }
 
 void ByPassFilter_voidFilter(ByPassFilter_t* f)

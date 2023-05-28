@@ -8,6 +8,8 @@
 #ifndef INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 #define INCLUDE_MCAL_TIM_TIM_INTERFACE_H_
 
+#include "Std_Types.h"
+#include "Bit_Math.h"
 #include "TIM_private.h"
 #include "RCC_interface.h"
 
