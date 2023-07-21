@@ -26,7 +26,8 @@
 #define MAX_u24	16777215
 #endif
 
-static void (*interruptCallback)(void) = NULL;
+static void (*interruptCallback)(void*) = NULL;
+static void* callbackParamsPtr = NULL;
 
 static b8 interruptOnlyOnce = false;
 //static b8 hadExcutedIsr = false;
@@ -66,9 +67,10 @@ void STK_voidDisableSysTick(void)
 }
 
 /*	setting callback	*/
-void STK_voidSetInterruptCallBack(void(*callBack)(void))
+void STK_voidSetInterruptCallBack(void(*callBack)(void*), void* paramsPtr)
 {
 	interruptCallback = callBack;
+	callbackParamsPtr = paramsPtr;
 }
 
 /*	enabling interrupt	*/
@@ -214,25 +216,29 @@ void STK_voidUpdatetTicksPerSecond(void)
 void SysTick_Handler(void)
 {
 	/* increment ovfCount (if enabled)	*/
-	ovfCount++;
+	if (ovfCountEnabled)
+		ovfCount++;
 
-//	if (ovfCountEnabled)
-//		ovfCount++;
-//
-//	/*	only once?	*/
-//	if (interruptOnlyOnce)
-//	{
-//		if (hadExcutedIsr)
-//			goto clearingInterruptFlag;
-//		else
-//			hadExcutedIsr = true;
-//	}
-//
-//	/*	callBack notification	*/
-//	if (interruptCallback != NULL)
-//		interruptCallback();
+	/*	only once?	*/
+	if (interruptOnlyOnce)
+	{
+		static u8 hadExcutedIsr = 0;
+		if (hadExcutedIsr)
+		{
+			/*	clear interrupt flag	*/
+			(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
+			return;
+		}
+		else
+		{
+			hadExcutedIsr = 1;
+		}
+	}
 
-	/*	clearing interrupt flag (does not get cleared by hardware, gets cleared by SW read)	*/
-	//clearingInterruptFlag:
+	/*	callBack notification	*/
+	if (interruptCallback != NULL)
+		interruptCallback(callbackParamsPtr);
+
+	/*	clear interrupt flag	*/
 	(void)GET_BIT(STK->CTRL, STK_COUNTFLAG);
 }

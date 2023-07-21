@@ -32,7 +32,8 @@
 #define EXTI_VECTORS_COUNT	16
 #endif
 
-static void (*EXTI_callback[EXTI_VECTORS_COUNT])(void);
+static void (*EXTI_callback[EXTI_VECTORS_COUNT])(void*);
+static void* EXTI_args[EXTI_VECTORS_COUNT];
 
 /*
  * returns vector number of the vector corresponding to the input line event
@@ -52,7 +53,7 @@ inline void EXTI_voidEnableLineInterrupt(u8 line)
 	NVIC_voidEnableInterrupt(EXTI_u8FindVector(line));
 }
 
-inline void EXTI_voidDisbleLineInterrupt(u8 line)
+inline void EXTI_voidDisableLineInterrupt(u8 line)
 {
 	NVIC_voidDisableInterrupt(EXTI_u8FindVector(line));
 }
@@ -103,9 +104,10 @@ void EXTI_voidSoftwareTrigger(u8 line)
 	SET_BIT(EXTI->SWIER, line);
 }
 
-void EXTI_voidSetCallBack(u8 line, void(*callBack)(void))
+void EXTI_voidSetCallBack(u8 line, void(*callBack)(void*), void* args)
 {
 	EXTI_callback[line] = callBack;
+	EXTI_args[line] = args;
 }
 
 void EXTI_voidMapLine(u8 line, GPIO_PortName_t port)
@@ -117,11 +119,11 @@ void EXTI_voidMapLine(u8 line, GPIO_PortName_t port)
 	#endif
 }
 
-void EXTI0_IRQHandler(void) 	{EXTI_callback[0](); SET_BIT(EXTI->PR, 0);}
-void EXTI1_IRQHandler(void) 	{EXTI_callback[1](); SET_BIT(EXTI->PR, 1);}
-void EXTI2_IRQHandler(void) 	{EXTI_callback[2](); SET_BIT(EXTI->PR, 2);}
-void EXTI3_IRQHandler(void) 	{EXTI_callback[3](); SET_BIT(EXTI->PR, 3);}
-void EXTI4_IRQHandler(void) 	{EXTI_callback[4](); SET_BIT(EXTI->PR, 4);}
+void EXTI0_IRQHandler(void) 	{EXTI_callback[0](EXTI_args[0]); SET_BIT(EXTI->PR, 0);}
+void EXTI1_IRQHandler(void) 	{EXTI_callback[1](EXTI_args[1]); SET_BIT(EXTI->PR, 1);}
+void EXTI2_IRQHandler(void) 	{EXTI_callback[2](EXTI_args[2]); SET_BIT(EXTI->PR, 2);}
+void EXTI3_IRQHandler(void) 	{EXTI_callback[3](EXTI_args[3]); SET_BIT(EXTI->PR, 3);}
+void EXTI4_IRQHandler(void) 	{EXTI_callback[4](EXTI_args[4]); SET_BIT(EXTI->PR, 4);}
 void EXTI9_5_IRQHandler(void)
 {
 	/*
@@ -132,7 +134,7 @@ void EXTI9_5_IRQHandler(void)
 	{
 		if (GET_BIT(EXTI->PR, i))
 		{
-			EXTI_callback[i]();
+			EXTI_callback[i](EXTI_args[i]);
 			SET_BIT(EXTI->PR, i);
 		}
 	}
@@ -147,7 +149,7 @@ void EXTI15_10_IRQHandler(void)
 	{
 		if (GET_BIT(EXTI->PR, i))
 		{
-			EXTI_callback[i]();
+			EXTI_callback[i](EXTI_args[i]);
 			SET_BIT(EXTI->PR, i);
 		}
 	}

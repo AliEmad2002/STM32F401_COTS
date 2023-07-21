@@ -27,7 +27,9 @@
 
 /*	else ==> CW	*/
 
-
+#ifndef NULL
+#define NULL ((void*)0x0)
+#endif
 
 void Rotary_Encoder_voidACallback(void)
 {
@@ -154,14 +156,14 @@ void Rotary_Encoder_voidInit(void)
 		/*	init EXTI of pinA	*/
 		EXTI_voidEnableLine(			encoder->outAPin);
 		EXTI_voidMapLine(				encoder->outAPin, encoder->outAPort);
-		EXTI_voidSetCallBack(			encoder->outAPin, Rotary_Encoder_voidACallback);
+		EXTI_voidSetCallBack(			encoder->outAPin, Rotary_Encoder_voidACallback, NULL);
 		EXTI_voidSetTriggeringEdge(		encoder->outAPin, EXTI_Trigger_fallingEdge);
 		EXTI_voidEnableLineInterrupt(	encoder->outAPin);
 
 		/*	init EXTI of pinB	*/
 		EXTI_voidEnableLine(			encoder->outBPin);
 		EXTI_voidMapLine(				encoder->outBPin, encoder->outBPort);
-		EXTI_voidSetCallBack(			encoder->outBPin, Rotary_Encoder_voidBCallback);
+		EXTI_voidSetCallBack(			encoder->outBPin, Rotary_Encoder_voidBCallback, NULL);
 		EXTI_voidSetTriggeringEdge(		encoder->outBPin, EXTI_Trigger_fallingEdge);
 		EXTI_voidEnableLineInterrupt(	encoder->outBPin);
 	}

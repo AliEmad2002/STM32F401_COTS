@@ -38,10 +38,17 @@ void Queue_voidInit(Queue_t* q);
 
 /*
  * assigns array of allocated pointers to the pointer array of a queue object.
- * (If user does not want to use dynamic allocation)
+ * (If user does not want to use dynamic allocation and data isn't in continuous RAM block.)
  */
-void Queue_voidAssignAllocatedPointers(
+void Queue_voidAssignAllocatedPointersFromPointerArray(
 	Queue_t* q, Queue_Data_t* allocatedPtrArr[QUEUE_MAX_LEN]);
+
+/*
+ * assigns pointers of an allocated array to the pointer array of a queue object.
+ * (If user does not want to use dynamic allocation and data is in continuous RAM block.)
+ */
+void Queue_voidAssignAllocatedPointersFromArray(
+	Queue_t* q, Queue_Data_t allocatedArr[QUEUE_MAX_LEN]);
 
 /*******************************************************************************
  * Info:

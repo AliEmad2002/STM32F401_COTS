@@ -11,8 +11,8 @@
 
 /*	SELF	*/
 #include "Queue_Config.h"
-#include "Queue_Private.h"
 #include "Queue_Interface.h"
+#include "Queue_Private.h"
 
 #if ENABLE_QUEUE
 
@@ -26,12 +26,21 @@ void Queue_voidInit(Queue_t* q)
 	q->count = 0;
 }
 
-void Queue_voidAssignAllocatedPointers(
+void Queue_voidAssignAllocatedPointersFromPointerArray(
 	Queue_t* q, Queue_Data_t* allocatedPtrArr[QUEUE_MAX_LEN])
 {
 	for (u16 i = 0; i < QUEUE_MAX_LEN; i++)
 	{
 		q->ptrArr[i] = allocatedPtrArr[i];
+	}
+}
+
+void Queue_voidAssignAllocatedPointersFromArray(
+	Queue_t* q, Queue_Data_t allocatedArr[QUEUE_MAX_LEN])
+{
+	for (u16 i = 0; i < QUEUE_MAX_LEN; i++)
+	{
+		q->ptrArr[i] = &allocatedArr[i];
 	}
 }
 

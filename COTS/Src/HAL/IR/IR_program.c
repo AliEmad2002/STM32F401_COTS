@@ -20,6 +20,10 @@
 #include "IR_config.h"
 #include "IR_interface.h"
 
+#ifndef NULL
+#define NULL ((void*)0x0)
+#endif
+
 /*	static global variables, defined for speed of comparison in run time.	*/
 static u32 ticks9000usMax = 0;
 static u32 ticks9000usMin = 0;
@@ -279,7 +283,7 @@ void IR_voidInit(
 	IR->lastTimeStamp = 0;
 
 	/*	set EXTI line callback	*/
-	EXTI_voidSetCallBack(extiLine, EXTICallback);
+	EXTI_voidSetCallBack(extiLine, EXTICallback, NULL);
 
 	/*	init object's data	*/
 	IR->bitCounter = 0;

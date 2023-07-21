@@ -12,7 +12,7 @@
 #ifndef INC_DATA_STRUCTURES_QUEUE_QUEUE_CONFIG_H_
 #define INC_DATA_STRUCTURES_QUEUE_QUEUE_CONFIG_H_
 
-#define ENABLE_QUEUE			0
+#define ENABLE_QUEUE			1
 
 #if ENABLE_QUEUE
 
@@ -23,16 +23,14 @@
  * creation, an array of pointer only will. Then, each pointer could be allocated
  * and freed by need).
  **/
-#include "CNC_config.h"
-#define QUEUE_MAX_LEN			LOOK_AHEAD_STACK_LEN
+#define QUEUE_MAX_LEN			128
 
 /**
  * Data type of queue's element (same for all queue objects).
  *
  * (It can be variable per queue object, but this would consume space and time).
  **/
-#include "G_code_interface.h"
-#define QUEUE_DATA_TYPE			G_Code_Msg_t
+#define QUEUE_DATA_TYPE			u8
 
 typedef QUEUE_DATA_TYPE	Queue_Data_t;
 
@@ -40,18 +38,20 @@ typedef QUEUE_DATA_TYPE	Queue_Data_t;
  * Function that copies data of queue's element.
  *
  * It takes pointers to pointer to destination data object (to be able to use
- * "malloc()" and edit pointer value, in case dynamic allocation used), and
- * pointer to source data object.
+ * "malloc()" and edit pointer value, **ONLY** in case dynamic allocation used),
+ * and pointer to source data object.
  *
  * If user uses dynamic allocation (and by extension did not use the function
  * "Queue_voidAssignAllocatedPointers()"), he / she must allocate destination
  * pointer in this function.
  *
- * Example: void copyFunc(Queue_Data_t* distPtr, Queue_Data_t* srcPtr);
+ * Example: void copyFunc(Queue_Data_t** distPP, Queue_Data_t* srcPtr);
  *
  * User may extern here.
  **/
-#define QUEUE_COPY_ELEMENT		G_Code_voidCopyMsg
+static void u8_copy(u8** distPP, u8* srcP){	**distPP = *srcP;	}
+
+#define QUEUE_COPY_ELEMENT		u8_copy
 
 /**
  * Function that deletes element of the queue.
@@ -61,7 +61,9 @@ typedef QUEUE_DATA_TYPE	Queue_Data_t;
  * Example: void deleteFunc(Queue_Data_t* dPtr);
  * User may extern here.
  **/
-#define QUEUE_FREE_ELEMENT		G_Code_voidFreeMsg
+static void u8_free(u8* var) {	}
+
+#define QUEUE_FREE_ELEMENT		u8_free
 
 ///**
 // * Function that prints element of the queue.

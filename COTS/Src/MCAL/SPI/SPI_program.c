@@ -75,6 +75,45 @@ void SPI_voidSetBaudRatePrescaler(
 	EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, prescaler, 3);
 }
 
+void SPI_voidSetBaudRatePrescalerNumericNoWait(
+	SPI_UnitNumber_t unitNumber, u16 prescaler)
+{
+	switch(prescaler)
+	{
+	case 2:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_2, 3);
+		break;
+
+	case 4:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_4, 3);
+		break;
+
+	case 8:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_8, 3);
+		break;
+
+	case 16:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_16, 3);
+		break;
+
+	case 32:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_32, 3);
+		break;
+
+	case 64:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_64, 3);
+		break;
+
+	case 128:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_128, 3);
+		break;
+
+	case 256:
+		EDT_REG(SPI[unitNumber]->CR1, SPI_CR1_BR_0, SPI_Prescaler_256, 3);
+		break;
+	}
+}
+
 /*
  * enables output for any of the two directional modes.
  */

@@ -36,7 +36,7 @@ void STK_voidEnableSysTick(void);
 void STK_voidDisableSysTick(void);
 
 /*	setting callback	*/
-void STK_voidSetInterruptCallBack(void(*callBack)(void));
+void STK_voidSetInterruptCallBack(void(*callBack)(void*), void* paramsPtr);
 
 /*	enabling interrupt	*/
 void STK_voidEnableInterrupt(STK_InterruptType_t intType);

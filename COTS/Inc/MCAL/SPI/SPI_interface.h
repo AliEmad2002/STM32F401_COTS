@@ -17,8 +17,8 @@ typedef enum{
 }SPI_UnitNumber_t;
 
 typedef enum{
-	SPI_Directional_Mode_Uni,		//	2-line
-	SPI_Directional_Mode_Bi			//	1-line
+	SPI_Directional_Mode_Uni,		//	2-line (full-duplex)
+	SPI_Directional_Mode_Bi			//	1-line (half-duplex)
 }SPI_Directional_Mode_t;
 
 typedef enum{
@@ -112,6 +112,46 @@ typedef enum{
 	(CLR_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_SPE))
 
 /*
+ * Sets communication to full-duplex (uni-directional mode)
+ */
+#define SPI_SET_FULL_DUPLEX(unitNumber)		\
+	(WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_BIDIMODE, 0))
+
+/*
+ * Sets frame direction to "MSB_First"
+ */
+#define SPI_SET_MSB_FIRST(unitNumber)		\
+	(WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_LSBFIRST, 0))
+
+/*
+ * Sets frame direction to "LSB_First"
+ */
+#define SPI_SET_LSB_FIRST(unitNumber)		\
+	(WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_LSBFIRST, 1))
+
+/*
+ * Enables master mode.
+ */
+#define SPI_ENABLE_MASTER_MODE(unitNumber)	                \
+{                                                           \
+	/*	SW slave management enable	*/                      \
+	SET_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_SSM);           \
+	/*	SW slave management deselect (self deselect)	*/  \
+	SET_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_SSI);           \
+	/*	Select master mode	*/                              \
+	WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_MSTR, 1);       \
+}
+
+/*
+ * Selects communication clock and phase mode.
+ */
+#define SPI_SET_COM_MODE(unitNumber, mode)                             \
+{                                                                      \
+	WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_CPHA, GET_BIT((mode), 0)); \
+	WRT_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_CPOL, GET_BIT((mode), 1)); \
+}
+
+/*
  * inits a SPI peripheral.
  * output is disabled by default, use "", or "" to enable it.
  */
@@ -122,8 +162,15 @@ void SPI_voidInit(
 		SPI_ClockPhase_t clockPhase
 	);
 
+/*
+ * Sets baudrate preescaler.
+ */
 void SPI_voidSetBaudRatePrescaler(
 	SPI_UnitNumber_t unitNumber, SPI_Prescaler_t prescaler);
+
+/*	Same as the previous function, implemented to be used in HAL_OS	*/
+void SPI_voidSetBaudRatePrescalerNumericNoWait(
+	SPI_UnitNumber_t unitNumber, u16 prescaler);
 
 /*
  * enables output for any of the two directional modes.
@@ -148,6 +195,9 @@ void SPI_voidInitPins(
 #define SPI_GET_FLAG(unitNumber, flag)			\
 	(GET_BIT(SPI[(unitNumber)]->SR, (flag)))
 
+/*	gets value of the busy flag	*/
+#define SPI_IS_BUSY(unitNumber)		(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy))
+
 /*
  * sets frame format (8/16 bits).
  * as frame format can only be changed when SPI peripheral is disabled, these
@@ -160,6 +210,16 @@ void SPI_voidInitPins(
 {														\
 	/*	wait for busy flag to be cleared by HW	*/		\
 	while(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy));	\
+	/*	disable peripheral	*/							\
+	SPI_DISABLE_PERIPHERAL((unitNumber));				\
+	/*	Set frame format	*/							\
+	CLR_BIT(SPI[(unitNumber)]->CR1, SPI_CR1_DFF);		\
+	/*	enable peripheral	*/							\
+	SPI_ENABLE_PERIPHERAL((unitNumber));				\
+}
+
+#define SPI_SET_FRAME_FORMAT_8_BIT_NO_WAIT(unitNumber)	\
+{														\
 	/*	disable peripheral	*/							\
 	SPI_DISABLE_PERIPHERAL((unitNumber));				\
 	/*	Set frame format	*/							\
@@ -239,6 +299,15 @@ void SPI_voidTransmitData(SPI_UnitNumber_t unitNumber, u16 data);
 	while(SPI_GET_FLAG((unitNumber), SPI_Flag_Busy));  \
 	SPI[(unitNumber)]->DR = (data);                    \
 }
+
+/*	writes byte on the DR with no wait (used in HAL_OS)	*/
+#define SPI_WRT_DR_NO_WAIT(unitNumber, data)	\
+	(SPI[(unitNumber)]->DR = (data))
+
+/*	gets byte from the DR with no wait (used in HAL_OS)	*/
+#define SPI_GET_DR_NO_WAIT(unitNumber)	\
+	(SPI[(unitNumber)]->DR & 0xFF)
+
 
 /*	enables DMA request	*/
 void SPI_voidEnableDMA(SPI_UnitNumber_t unitNumber, SPI_DMA_Request_t request);
